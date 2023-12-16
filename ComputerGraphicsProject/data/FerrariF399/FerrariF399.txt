@@ -1,0 +1,12 @@
+#DownloadModelFormat: OBJ
+#GeometryFile: FerrariF399.obj
+#MaterialFile: FerrariF399.mtl
+#PreviewFile: FerrariF399.jpg
+#OtherFiles:
+#DownloadedFromURL: www.3Dxtras.com
+#DateOfDownload: 12.4.2008
+#CreatedBy: DMI
+#CreatedIn: 3d Studio Max
+#UploadedBy: Tomas Latal
+#Description: Model of Ferrari F399 car
+#NumberOfPolygons: 21167

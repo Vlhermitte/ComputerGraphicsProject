@@ -1,0 +1,13 @@
+#DownloadModelFormat: OBJ
+#GeometryFile: Man_body.obj
+#MaterialFile: Man_body.mtl
+#PreviewFile: Man_body.jpg
+#OtherFiles: Man_body.max
+#DownloadedFromURL:   ---
+#DateOfDownload:   14.12.2006
+#CreatedBy: ---
+#CreatedIn: 3ds Max
+#UploadedBy: Miroslav Sikora
+#Description: 	Model postavy muze. 
+		Materialovy soubor obcas nefunguje spravne, pro vykresleni pak pouzijte funkci glmDraw(pmodel, GLM_SMOOTH) 
+#NumberOfPolygons: ---
