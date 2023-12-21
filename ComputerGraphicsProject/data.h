@@ -22,6 +22,7 @@
 #define PLAYER_VIEW_ANGLE_DELTA 2.0f
 
 #define MAX_HEIGHT 0.8f
+#define MIN_HEIGHT -0.2f
 
 
 enum { 

@@ -18,6 +18,8 @@ glm::mat4 modelMatrixPlayer;
 glm::mat4 modelMatrixApple;
 glm::mat4 modelMatrixFerrari;
 
+bool useLighting = false;
+
 // -----------------------  OpenGL Stuff ---------------------------------
 
 /**
@@ -34,20 +36,30 @@ void loadShaderPrograms()
 
 	commonShaderProgram.program = pgr::createProgram(shaders);
 	commonShaderProgram.locations.position = glGetAttribLocation(commonShaderProgram.program, "position");
-	commonShaderProgram.locations.color = glGetUniformLocation(commonShaderProgram.program, "theColor");
+	commonShaderProgram.locations.normal = glGetAttribLocation(commonShaderProgram.program, "normal");
+	commonShaderProgram.locations.texCoord = glGetAttribLocation(commonShaderProgram.program, "texCoord");
+	commonShaderProgram.locations.color = glGetAttribLocation(commonShaderProgram.program, "color_v");
 
 	// material
-	/*commonShaderProgram.locations.ambient = glGetUniformLocation(commonShaderProgram.program, "material.ambient");
+	commonShaderProgram.locations.ambient = glGetUniformLocation(commonShaderProgram.program, "material.ambient");
 	commonShaderProgram.locations.diffuse = glGetUniformLocation(commonShaderProgram.program, "material.diffuse");
 	commonShaderProgram.locations.specular = glGetUniformLocation(commonShaderProgram.program, "material.specular");
-	commonShaderProgram.locations.shininess = glGetUniformLocation(commonShaderProgram.program, "material.shininess")*/;
+	commonShaderProgram.locations.shininess = glGetUniformLocation(commonShaderProgram.program, "material.shininess");
 	
 
 	// other attributes and uniforms
 	commonShaderProgram.locations.PVM = glGetUniformLocation(commonShaderProgram.program, "PVM");
 
+	// Testing if all attributes are found
 	assert(commonShaderProgram.locations.position != -1);
-	assert(commonShaderProgram.locations.color != -1);
+	// assert(commonShaderProgram.locations.normal != -1);
+	assert(commonShaderProgram.locations.texCoord != -1);
+
+	// Testing if all uniforms are found
+	assert(commonShaderProgram.locations.ambient != -1);
+	assert(commonShaderProgram.locations.diffuse != -1);
+	assert(commonShaderProgram.locations.specular != -1);
+	assert(commonShaderProgram.locations.shininess != -1);
 	assert(commonShaderProgram.locations.PVM != -1);
 	// ...
 
@@ -131,12 +143,12 @@ void initFerrari() {
 
 
 void initSceneObjects() {
-	// initFloor(commonShaderProgram, &floorGeometry);
+	useLighting = true;
+
 	initTerrain();
 	initPlayer();
 	// initApple();
 	// initFerrari();
-
 }
 
 // -----------------------  Drawing ---------------------------------
@@ -153,14 +165,19 @@ void setTransformUniforms(const glm::mat4& modelMatrix, const glm::mat4& viewMat
 }
 
 void setMaterialUniforms(const Material& material, glm::vec4 color) {
-	/*glUniform3fv(commonShaderProgram.locations.ambient, 1, glm::value_ptr(material.ambient));
-	glUniform3fv(commonShaderProgram.locations.diffuse, 1, glm::value_ptr(material.diffuse));
-	glUniform3fv(commonShaderProgram.locations.specular, 1, glm::value_ptr(material.specular));
-	glUniform1f(commonShaderProgram.locations.shininess, material.shininess);*/
 
-	// FOR NOW WE SET THE COLOR MANUALLY
-	glUniform4fv(commonShaderProgram.locations.color, 1, glm::value_ptr(color));
-	CHECK_GL_ERROR();
+	if (useLighting) {
+		glUniform3fv(commonShaderProgram.locations.ambient, 1, glm::value_ptr(material.ambient));
+		glUniform3fv(commonShaderProgram.locations.diffuse, 1, glm::value_ptr(material.diffuse));
+		glUniform3fv(commonShaderProgram.locations.specular, 1, glm::value_ptr(material.specular));
+		glUniform1f(commonShaderProgram.locations.shininess, material.shininess);
+		CHECK_GL_ERROR();
+	}
+	else {
+		// FOR NOW WE SET THE COLOR MANUALLY
+		glUniform4fv(commonShaderProgram.locations.color, 1, glm::value_ptr(color));
+		CHECK_GL_ERROR();
+	}
 }
 
 void drawFloor(Floor* Floor, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
@@ -457,7 +474,7 @@ bool loadMeshes(const std::string& fileName, ShaderProgram& shader, std::vector<
 	return true;
 }
 
-bool loadSingleMesh(const std::string& fileName, ShaderProgram& shader, ObjectGeometry** geometry) {
+bool loadSingleMesh(const std::string & fileName, ShaderProgram & shader, ObjectGeometry * *geometry) {
 	Assimp::Importer importer;
 
 	// Unitize object in size (scale the model to fit into (-1..1)^3)
@@ -544,6 +561,48 @@ bool loadSingleMesh(const std::string& fileName, ShaderProgram& shader, ObjectGe
 	if ((retValue = aiGetMaterialColor(mat, AI_MATKEY_COLOR_DIFFUSE, &color)) != AI_SUCCESS)
 		color = aiColor4D(0.0f, 0.0f, 0.0f, 0.0f);
 
+	(*geometry)->material.diffuse = glm::vec3(color.r, color.g, color.b);
+
+	if ((retValue = aiGetMaterialColor(mat, AI_MATKEY_COLOR_AMBIENT, &color)) != AI_SUCCESS)
+		color = aiColor4D(0.0f, 0.0f, 0.0f, 0.0f);
+	(*geometry)->material.ambient = glm::vec3(color.r, color.g, color.b);
+
+	if ((retValue = aiGetMaterialColor(mat, AI_MATKEY_COLOR_SPECULAR, &color)) != AI_SUCCESS)
+		color = aiColor4D(0.0f, 0.0f, 0.0f, 0.0f);
+	(*geometry)->material.specular = glm::vec3(color.r, color.g, color.b);
+
+	ai_real shininess, strength;
+	unsigned int max;	// changed: to unsigned
+
+	max = 1;
+	if ((retValue = aiGetMaterialFloatArray(mat, AI_MATKEY_SHININESS, &shininess, &max)) != AI_SUCCESS)
+		shininess = 1.0f;
+	max = 1;
+	if ((retValue = aiGetMaterialFloatArray(mat, AI_MATKEY_SHININESS_STRENGTH, &strength, &max)) != AI_SUCCESS)
+		strength = 1.0f;
+	(*geometry)->material.shininess = shininess * strength;
+
+	(*geometry)->material.texture = 0;
+
+	// load texture image
+	if (mat->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
+		// get texture name 
+		aiString path; // filename
+
+		aiReturn texFound = mat->GetTexture(aiTextureType_DIFFUSE, 0, &path);
+		std::string textureName = path.data;
+
+		size_t found = fileName.find_last_of("/\\");
+		// insert correct texture file path 
+		if (found != std::string::npos) { // not found
+			//subMesh_p->textureName.insert(0, "/");
+			textureName.insert(0, fileName.substr(0, found + 1));
+		}
+
+		std::cout << "Loading texture file: " << textureName << std::endl;
+		(*geometry)->material.texture = pgr::createTexture(textureName);
+	}
+	CHECK_GL_ERROR();
 
 	glGenVertexArrays(1, &((*geometry)->vertexArrayObject));
 	glBindVertexArray((*geometry)->vertexArrayObject);
@@ -554,10 +613,19 @@ bool loadSingleMesh(const std::string& fileName, ShaderProgram& shader, ObjectGe
 	glEnableVertexAttribArray(shader.locations.position);
 	glVertexAttribPointer(shader.locations.position, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-	glDisableVertexAttribArray(shader.locations.color);
-	// following line is problematic on AMD/ATI graphic cards
-	// -> if you see black screen (no objects at all) than try to set color manually in vertex shader to see at least something
-	glVertexAttrib3f(shader.locations.color, color.r, color.g, color.b);
+	if (useLighting) {
+		glEnableVertexAttribArray(shader.locations.normal);
+		glVertexAttribPointer(shader.locations.normal, 3, GL_FLOAT, GL_FALSE, 0, (void*)(3 * sizeof(float) * mesh->mNumVertices));
+	}
+	else {
+		glDisableVertexAttribArray(shader.locations.color);
+		// following line is problematic on AMD/ATI graphic cards
+		// -> if you see black screen (no objects at all) than try to set color manually in vertex shader to see at least something
+		glVertexAttrib3f(shader.locations.color, color.r, color.g, color.b);
+	}
+
+	glEnableVertexAttribArray(shader.locations.texCoord);
+	glVertexAttribPointer(shader.locations.texCoord, 2, GL_FLOAT, GL_FALSE, 0, (void*)(6 * sizeof(float) * mesh->mNumVertices));
 	CHECK_GL_ERROR();
 
 	glBindVertexArray(0);

@@ -13,6 +13,7 @@ struct _GameObjects {
 struct _GameState {
 	bool wireframeMode; // false
 	bool freeCameraMode; // false
+	bool cameraMode; // false
 	float cameraElevationAngle; // in degrees
 	float elapsedTime; // in seconds
 	bool keyMap[KEYS_COUNT]; 
@@ -82,12 +83,14 @@ void restartGame() {
 	GameObjects.player->startTime = GameState.elapsedTime;
 	GameObjects.player->currentTime = GameObjects.player->startTime;
 
-	GameObjects.terrain->position = glm::vec3(0.0f, 0.0f, -0.5f);
+	// Setting up the terrain with position (0,0,MIN_HEIGHT) (xyz)
+	GameObjects.terrain->position = glm::vec3(0.0f, 0.0f, MIN_HEIGHT);
 	GameObjects.terrain->size = TERRAIN_SIZE;
 
 	// GameState reinitialization
-	if (GameState.freeCameraMode == true) {
+	if (GameState.freeCameraMode == true or GameState.cameraMode == true) {
 		GameState.freeCameraMode = false;
+		GameState.cameraMode = false;
 		glutPassiveMotionFunc(NULL);
 	}
 	GameState.cameraElevationAngle = 0.0f;
@@ -106,16 +109,6 @@ void cleanUpObjects() {
 	delete GameObjects.apple;
 	delete GameObjects.ferrari;
 
-}
-
-
-Floor* createFloor() {
-	Floor* floor = new Floor();
-	floor->position = glm::vec3(0.0f, 0.0f, 0.0f);
-	floor->size = FLOOR_SIZE;
-	floor->color = glm::vec3(0.0f, 1.0f, 0.0f);
-
-	return floor;
 }
 
 
@@ -144,10 +137,9 @@ void drawScene() {
 	glm::mat4 projectionMatrix = orthoProjectionMatrix;
 
 	if (GameState.freeCameraMode) {
-		glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 0.0f);
 		glm::vec3 cameraUpVector = glm::vec3(0.0f, 0.0f, 1.0f);
 
-		cameraPosition = GameObjects.player->position;
+		glm::vec3 cameraPosition = GameObjects.player->position;
 
 		glm::vec3 cameraCenter = cameraPosition + std::cos(glm::radians(-GameState.cameraElevationAngle)) * GameObjects.player->direction
 			+ std::sin(glm::radians(-GameState.cameraElevationAngle)) * glm::vec3(0.0f, 0.0f, 1.0f);
@@ -160,17 +152,27 @@ void drawScene() {
 
 		projectionMatrix = glm::perspective(glm::radians(60.0f), GameState.windowWidth / (float)GameState.windowHeight, 0.1f, 10.0f);
 	}
+	else if (GameState.cameraMode) {
+		// TODO : FIX CAMERA STAYING BEHIND THE PLAYER
+		glm::vec3 cameraUpVector = glm::vec3(0.0f, 0.0f, 1.0f);
+
+		glm::vec3 cameraPosition = glm::vec3(GameObjects.player->position.x, GameObjects.player->position.y - 0.1f, GameObjects.player->position.z + 0.1f);
+		glm::vec3 cameraCenter = cameraPosition + GameObjects.player->direction;
+
+		viewMatrix = glm::lookAt(
+			cameraPosition,
+			cameraCenter,
+			cameraUpVector
+		);
+
+		projectionMatrix = glm::perspective(glm::radians(90.0f), GameState.windowWidth / (float)GameState.windowHeight, 0.1f, 10.0f);
+	}
 
 	CHECK_GL_ERROR();
 
-
-	// Create the Floor object
-	GameObjects.floor = createFloor();
-
 	// draw the scene objects
-	drawPlayer(GameObjects.player, viewMatrix, projectionMatrix);
 	drawTerrain(GameObjects.terrain, viewMatrix, projectionMatrix);
-	// drawFloor(GameObjects.floor, viewMatrix, projectionMatrix);
+	drawPlayer(GameObjects.player, viewMatrix, projectionMatrix);
 	// drawApple(GameObject.apple, viewMatrixApple, projectionMatrixApple);
 	// drawFerrari(GameObject.ferrari, viewMatrixFerrari, projectionMatrixFerrari);
 }
@@ -253,14 +255,23 @@ void keyboardCb(unsigned char keyPressed, int mouseX, int mouseY) {
 				GameState.wireframeMode = true;
 			}
 			break;
-		case 'c': // switch camera mode
+		case 'c': // switch camera mode to first person
 			GameState.freeCameraMode = !GameState.freeCameraMode;
-			if (GameState.freeCameraMode == true) {
+			GameState.cameraMode = false;
+			if (GameState.freeCameraMode) {
 				glutPassiveMotionFunc(mouseMotionCb);
 				glutWarpPointer(GameState.windowWidth / 2, GameState.windowHeight / 2);
 			}
 			else {
 				glutPassiveMotionFunc(NULL);
+			}
+			break;
+		case 'v': // switch camera mode to third person
+			GameState.cameraMode = !GameState.cameraMode;
+			GameState.freeCameraMode = false;
+			if (GameState.cameraMode) {
+				glutPassiveMotionFunc(NULL);
+				glutWarpPointer(GameState.windowWidth / 2, GameState.windowHeight / 2);
 			}
 			break;
 		case ' ':
