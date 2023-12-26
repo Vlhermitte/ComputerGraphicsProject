@@ -6,8 +6,8 @@
 #include "pgr.h"
 #include "renderer.h"
 
-constexpr int WINDOW_WIDTH = 500;
-constexpr int WINDOW_HEIGHT = 500;
+constexpr int WINDOW_WIDTH = 800;
+constexpr int WINDOW_HEIGHT = 800;
 constexpr char WINDOW_TITLE[] = "Project Computer Graphics Valentin Lhermitte";
 
 // ----------------------- Application ---------------------------------

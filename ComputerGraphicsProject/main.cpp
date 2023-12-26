@@ -3,17 +3,14 @@
 
 
 struct _GameObjects {
-	Floor* floor;
 	Player* player;
 	Terrain* terrain;
-	Apple* apple;
-	Ferrari* ferrari;
 } GameObjects;
 
 struct _GameState {
 	bool wireframeMode; // false
-	bool freeCameraMode; // false
-	bool cameraMode; // false
+	bool fpsCameraMode; // false
+	bool sceneCamera; // false
 	float cameraElevationAngle; // in degrees
 	float elapsedTime; // in seconds
 	bool keyMap[KEYS_COUNT]; 
@@ -88,9 +85,9 @@ void restartGame() {
 	GameObjects.terrain->size = TERRAIN_SIZE;
 
 	// GameState reinitialization
-	if (GameState.freeCameraMode == true or GameState.cameraMode == true) {
-		GameState.freeCameraMode = false;
-		GameState.cameraMode = false;
+	if (GameState.fpsCameraMode or GameState.sceneCamera) {
+		GameState.fpsCameraMode = false;
+		GameState.sceneCamera = false;
 		glutPassiveMotionFunc(NULL);
 	}
 	GameState.cameraElevationAngle = 0.0f;
@@ -136,12 +133,12 @@ void drawScene() {
 	glm::mat4 viewMatrix = orthoViewMatrix;
 	glm::mat4 projectionMatrix = orthoProjectionMatrix;
 
-	if (GameState.freeCameraMode) {
+	if (GameState.fpsCameraMode) {
 		glm::vec3 cameraUpVector = glm::vec3(0.0f, 0.0f, 1.0f);
 
 		glm::vec3 cameraPosition = GameObjects.player->position;
-
-		glm::vec3 cameraCenter = cameraPosition + std::cos(glm::radians(-GameState.cameraElevationAngle)) * GameObjects.player->direction
+		glm::vec3 cameraDirection = GameObjects.player->direction;
+		glm::vec3 cameraCenter = cameraPosition + cameraDirection * std::cos(glm::radians(-GameState.cameraElevationAngle))
 			+ std::sin(glm::radians(-GameState.cameraElevationAngle)) * glm::vec3(0.0f, 0.0f, 1.0f);
 
 		viewMatrix = glm::lookAt(
@@ -150,22 +147,21 @@ void drawScene() {
 			cameraUpVector
 		);
 
-		projectionMatrix = glm::perspective(glm::radians(60.0f), GameState.windowWidth / (float)GameState.windowHeight, 0.1f, 10.0f);
+		projectionMatrix = glm::perspective(glm::radians(70.0f), GameState.windowWidth / (float)GameState.windowHeight, 0.1f, 10.0f);
 	}
-	else if (GameState.cameraMode) {
-		// TODO : FIX CAMERA STAYING BEHIND THE PLAYER
+	else if (GameState.sceneCamera) {
 		glm::vec3 cameraUpVector = glm::vec3(0.0f, 0.0f, 1.0f);
-
-		glm::vec3 cameraPosition = glm::vec3(GameObjects.player->position.x, GameObjects.player->position.y - 0.1f, GameObjects.player->position.z + 0.1f);
-		glm::vec3 cameraCenter = cameraPosition + GameObjects.player->direction;
+		glm::vec3 cameraPosition = glm::vec3(0.0f, -0.2f, 0.2f);
+		glm::vec3 cameraTarget = GameObjects.player->position;
 
 		viewMatrix = glm::lookAt(
 			cameraPosition,
-			cameraCenter,
+			cameraTarget,
 			cameraUpVector
 		);
 
-		projectionMatrix = glm::perspective(glm::radians(90.0f), GameState.windowWidth / (float)GameState.windowHeight, 0.1f, 10.0f);
+		projectionMatrix = glm::perspective(glm::radians(100.0f), GameState.windowWidth / (float)GameState.windowHeight, 0.1f, 10.0f);
+
 	}
 
 	CHECK_GL_ERROR();
@@ -256,22 +252,26 @@ void keyboardCb(unsigned char keyPressed, int mouseX, int mouseY) {
 			}
 			break;
 		case 'c': // switch camera mode to first person
-			GameState.freeCameraMode = !GameState.freeCameraMode;
-			GameState.cameraMode = false;
-			if (GameState.freeCameraMode) {
+			GameState.fpsCameraMode = !GameState.fpsCameraMode;
+			if (GameState.fpsCameraMode) {
+				printf("First person camera\n");
 				glutPassiveMotionFunc(mouseMotionCb);
 				glutWarpPointer(GameState.windowWidth / 2, GameState.windowHeight / 2);
 			}
 			else {
+				printf("Top view Camera\n");
 				glutPassiveMotionFunc(NULL);
 			}
 			break;
-		case 'v': // switch camera mode to third person
-			GameState.cameraMode = !GameState.cameraMode;
-			GameState.freeCameraMode = false;
-			if (GameState.cameraMode) {
+		case 'v': // switch camera mode to scene camera
+			GameState.sceneCamera = !GameState.sceneCamera;
+			GameState.fpsCameraMode = false;
+			if (GameState.sceneCamera) {
+				printf("Scene camera\n");
 				glutPassiveMotionFunc(NULL);
-				glutWarpPointer(GameState.windowWidth / 2, GameState.windowHeight / 2);
+			}
+			else {
+				printf("Top view Camera\n");
 			}
 			break;
 		case ' ':

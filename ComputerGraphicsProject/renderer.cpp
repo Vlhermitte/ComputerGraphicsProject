@@ -45,6 +45,8 @@ void loadShaderPrograms()
 	commonShaderProgram.locations.diffuse = glGetUniformLocation(commonShaderProgram.program, "material.diffuse");
 	commonShaderProgram.locations.specular = glGetUniformLocation(commonShaderProgram.program, "material.specular");
 	commonShaderProgram.locations.shininess = glGetUniformLocation(commonShaderProgram.program, "material.shininess");
+	commonShaderProgram.locations.useTexture = glGetUniformLocation(commonShaderProgram.program, "material.useTexture");
+	commonShaderProgram.locations.texSampler = glGetUniformLocation(commonShaderProgram.program, "texSampler");
 	
 
 	// other attributes and uniforms
@@ -60,6 +62,8 @@ void loadShaderPrograms()
 	assert(commonShaderProgram.locations.diffuse != -1);
 	assert(commonShaderProgram.locations.specular != -1);
 	assert(commonShaderProgram.locations.shininess != -1);
+	assert(commonShaderProgram.locations.useTexture != -1);
+	assert(commonShaderProgram.locations.texSampler != -1);
 	assert(commonShaderProgram.locations.PVM != -1);
 	// ...
 
@@ -81,38 +85,6 @@ void cleanupShaderPrograms(void) {
  * \brief Init the objects in the scene.
  */
 
-void initFloor(ShaderProgram& shader, ObjectGeometry** geometry) {
-
-	*geometry = new ObjectGeometry;
-	int floorTrianglesCount = sizeof(floorIndices) / sizeof(float);
-
-	glGenVertexArrays(1, &((*geometry)->vertexArrayObject));
-	glBindVertexArray((*geometry)->vertexArrayObject);
-
-	glGenBuffers(1, &((*geometry)->vertexBufferObject));
-	glBindBuffer(GL_ARRAY_BUFFER, (*geometry)->vertexBufferObject);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(floorVertices), floorVertices, GL_STATIC_DRAW);
-	CHECK_GL_ERROR();
-
-	glGenBuffers(1, &((*geometry)->elementBufferObject));
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, (*geometry)->elementBufferObject);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * sizeof(unsigned int) * floorTrianglesCount, floorIndices, GL_STATIC_DRAW);
-	CHECK_GL_ERROR();
-
-	// FIX THIS : SEE HOW DRAW UFOs IS DONE
-	// Assuming each vertex position is 3 floats (x, y, z)
-	glEnableVertexAttribArray(shader.locations.position);
-	glVertexAttribPointer(shader.locations.position, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
-	CHECK_GL_ERROR();
-
-	// unbind the VAO
-	glBindVertexArray(0);
-
-	(*geometry)->numTriangles = floorTrianglesCount;
-	
-	std::cout << "Floor initialized" << std::endl;
-}
-
 void initTerrain() {
 	if (loadSingleMesh(TERRAIN_MODEL_NAME, commonShaderProgram, &TerrainGeometry) != true) {
 		std::cerr << "initTerrain() : Cannot load terrain model" << std::endl;
@@ -127,28 +99,12 @@ void initPlayer() {
 	CHECK_GL_ERROR();
 }
 
-void initApple() {
-	if (loadMeshes(APPLE_MODEL_NAME, commonShaderProgram, AppleGeometries) != true) {
-		std::cerr << "initApple() : Cannot load apple model" << std::endl;
-	}
-	CHECK_GL_ERROR();
-}
-
-void initFerrari() {
-	if (loadMeshes(FERRARI_MODEL_NAME, commonShaderProgram, FerrariGeometries) != true) {
-		std::cerr << "initFerrari() : Cannot load ferrari model" << std::endl;
-	}
-	CHECK_GL_ERROR();
-}
-
 
 void initSceneObjects() {
 	useLighting = true;
 
 	initTerrain();
 	initPlayer();
-	// initApple();
-	// initFerrari();
 }
 
 // -----------------------  Drawing ---------------------------------
@@ -172,45 +128,20 @@ void setMaterialUniforms(const Material& material, glm::vec4 color) {
 		glUniform3fv(commonShaderProgram.locations.specular, 1, glm::value_ptr(material.specular));
 		glUniform1f(commonShaderProgram.locations.shininess, material.shininess);
 		CHECK_GL_ERROR();
+		if (material.texture != 0) {
+			glUniform1i(commonShaderProgram.locations.useTexture, 1);  // do texture sampling
+			glUniform1i(commonShaderProgram.locations.texSampler, 0);  // texturing unit 0 -> samplerID   [for the GPU linker]
+			glActiveTexture(GL_TEXTURE0 + 0);						   // texturing unit 0 -> to be bound [for OpenGL BindTexture]
+			glBindTexture(GL_TEXTURE_2D, material.texture);
+		}
+		else {
+			glUniform1i(commonShaderProgram.locations.useTexture, 0);  // do not sample the texture
+		}
 	}
 	else {
 		// FOR NOW WE SET THE COLOR MANUALLY
 		glUniform4fv(commonShaderProgram.locations.color, 1, glm::value_ptr(color));
 		CHECK_GL_ERROR();
-	}
-}
-
-void drawFloor(Floor* Floor, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
-	if (commonShaderProgram.initialized && floorGeometry != NULL) {
-		glUseProgram(commonShaderProgram.program);
-
-		/*glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), Floor->position);
-		modelMatrix = glm::rotate(modelMatrix, glm::radians(0.0f), glm::vec3(0, 0, 1));
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(Floor->size, Floor->size, Floor->size));*/
-
-		glm::mat4 modelMatrix = alignObject(Floor->position, Floor->direction, glm::vec3(0.0f, 0.0f, 1.0f));
-		modelMatrix = glm::scale(modelMatrix, glm::vec3(Floor->size));
-
-		//// Move, rotate and scale the triangle
-		//modelMatrixFloor = glm::translate(modelMatrixFloor, Floor->position);
-		//modelMatrixFloor = glm::rotate(modelMatrixFloor, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // rotate around x-axis
-		//modelMatrixFloor = glm::rotate(modelMatrixFloor, glm::radians(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // rotate around y-axis
-		//modelMatrixFloor = glm::rotate(modelMatrixFloor, glm::radians(1.0f), glm::vec3(0.0f, 0.0f, 1.0f)); // rotate around z-axis
-		//modelMatrixFloor = glm::scale(modelMatrixFloor, glm::vec3(Floor->size));
-
-		setTransformUniforms(modelMatrix, viewMatrix, projectionMatrix);
-
-		glBindVertexArray(floorGeometry->vertexArrayObject);
-		glDrawElements(GL_TRIANGLES, floorGeometry->numTriangles, GL_UNSIGNED_INT, (void*)0);
-
-		glBindVertexArray(0);
-		glUseProgram(0);
-		CHECK_GL_ERROR();
-
-		// std::cout << "Floor drawn" << std::endl;
-	}
-	else {
-		std::cout << "drawFloor() : Shader program not initialized or floorGeometry NULL" << std::endl;
 	}
 }
 
@@ -256,51 +187,6 @@ void drawTerrain(Terrain* Terrain, const glm::mat4& viewMatrix, const glm::mat4&
 	// draw geometry
 	glBindVertexArray(TerrainGeometry->vertexArrayObject);
 	glDrawElements(GL_TRIANGLES, TerrainGeometry->numTriangles * 3, GL_UNSIGNED_INT, 0);
-
-	glBindVertexArray(0);
-	glUseProgram(0);
-}
-
-void drawApple(Apple* Apple, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
-
-	glUseProgram(commonShaderProgram.program);
-
-	// prepare modeling transform matrix
-	glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), Apple->position);
-	modelMatrix = glm::rotate(modelMatrix, glm::radians(2.0f), glm::vec3(0, 0, 1));
-	modelMatrix = glm::scale(modelMatrix, glm::vec3(Apple->size));
-
-	// send matrices to the vertex & fragment shader
-	setTransformUniforms(modelMatrix, viewMatrix, projectionMatrix);
-
-	// draw geometry
-	/*for (int i = 0; i < AppleGeometries.size(); i++) {
-		setMaterialUniforms(AppleGeometries[i]->material);
-		glBindVertexArray(AppleGeometries[i]->vertexArrayObject);
-		glDrawElements(GL_TRIANGLES, AppleGeometries[i]->numTriangles * 3, GL_UNSIGNED_INT, 0);
-	}*/
-
-	glBindVertexArray(0);
-	glUseProgram(0);
-}
-
-void drawFerrari(Ferrari* Ferrari, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
-	glUseProgram(commonShaderProgram.program);
-
-	// prepare modeling transform matrix
-	glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), Ferrari->position);
-	modelMatrix = glm::rotate(modelMatrix, glm::radians(2.0f), glm::vec3(0, 0, 1));
-	modelMatrix = glm::scale(modelMatrix, glm::vec3(Ferrari->size));
-
-	// send matrices to the vertex & fragment shader
-	setTransformUniforms(modelMatrix, viewMatrix, projectionMatrix);
-
-	// draw geometry
-	/*for (int i = 0; i < FerrariGeometries.size(); i++) {
-		setMaterialUniforms(FerrariGeometries[i]->material);
-		glBindVertexArray(FerrariGeometries[i]->vertexArrayObject);
-		glDrawElements(GL_TRIANGLES, FerrariGeometries[i]->numTriangles * 3, GL_UNSIGNED_INT, 0);
-	}*/
 
 	glBindVertexArray(0);
 	glUseProgram(0);

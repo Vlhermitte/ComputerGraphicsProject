@@ -15,20 +15,15 @@ void cleanupShaderPrograms(void);
 
 // -----------------------  Init scene objects ---------------------------------
 
-void initFloor(ShaderProgram& shader, ObjectGeometry** geometry);
+void initTerrain();
 void initPlayer();
-void initApple();
-void initFerrari();
 
 void initSceneObjects();
 
 // -----------------------  Draw scene objects ---------------------------------
 
-void drawFloor(Floor* Floor, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
-void drawPlayer(Player* Player, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
 void drawTerrain(Terrain* Terrain, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
-void drawApple(Apple* Apple, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
-void drawFerrari(Ferrari* Ferrari, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
+void drawPlayer(Player* Player, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
 
 // -----------------------  Clean up scene objects ----------------------------
 
@@ -37,7 +32,6 @@ void cleanupModels();
 
 // -----------------------  Loading .obj file ---------------------------------
 
-bool loadMeshes(const std::string& fileName, ShaderProgram& shader, std::vector<ObjectGeometry*>& geometries);
 bool loadSingleMesh(const std::string& fileName, ShaderProgram& shader, ObjectGeometry** geometry);
 
 

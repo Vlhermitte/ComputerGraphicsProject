@@ -29,11 +29,13 @@ typedef struct _ShaderProgram {
 		GLint normal;
 		GLint texCoord;
 
-		// material
+		// material locations
 		GLint ambient;
 		GLint diffuse;
 		GLint specular;
 		GLint shininess;
+		GLint useTexture;
+		GLint texSampler;
 
 		// uniforms locations
 		GLint PVM;
