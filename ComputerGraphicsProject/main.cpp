@@ -101,10 +101,9 @@ void restartGame() {
  * \brief Delete all objects.
  */
 void cleanUpObjects() {
-		// delete all objects
-	delete GameObjects.floor;
-	delete GameObjects.apple;
-	delete GameObjects.ferrari;
+	// delete all objects
+	delete GameObjects.player;
+	delete GameObjects.terrain;
 
 }
 
