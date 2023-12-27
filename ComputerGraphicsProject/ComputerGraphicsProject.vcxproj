@@ -200,6 +200,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="fragementShader.frag" />
+    <None Include="skyboxFragmentShader.frag" />
+    <None Include="skyboxVertexShader.vert" />
     <None Include="vertexShader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

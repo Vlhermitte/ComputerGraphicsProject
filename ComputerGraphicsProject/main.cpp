@@ -15,8 +15,8 @@ struct _GameState {
 	float elapsedTime; // in seconds
 	bool keyMap[KEYS_COUNT]; 
 
-	int windowWidth; // 500 (currently not used)
-	int windowHeight; // 500 (currently not used)
+	int windowWidth; // 800 (currently not used)
+	int windowHeight; // 800 (currently not used)
 } GameState;
 
 // -----------------------  Application ---------------------------------
@@ -26,6 +26,8 @@ struct _GameState {
  */
 void initApplication() {
 	// init OpenGL
+	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+	glEnable(GL_DEPTH_TEST);
 	// - all programs (shaders), buffers, textures, ...
 	loadShaderPrograms();
 
@@ -47,10 +49,13 @@ void initApplication() {
  */
 void finalizeApplication() {
 
-	// cleanUpObjects();
+	cleanUpObjects();
+
+	delete GameObjects.player;
+	delete GameObjects.terrain;
 
 	// delete buffers
-	// cleanupModels();
+	cleanupModels();
 
 	// delete shaders
 	cleanupShaderPrograms();
@@ -101,10 +106,8 @@ void restartGame() {
  * \brief Delete all objects.
  */
 void cleanUpObjects() {
-	// delete all objects
-	delete GameObjects.player;
-	delete GameObjects.terrain;
-
+	// delete all non essential objects (i.e not the player and the terrain)
+	// TODO : Delete objects when we have impl
 }
 
 
@@ -168,8 +171,9 @@ void drawScene() {
 	// draw the scene objects
 	drawTerrain(GameObjects.terrain, viewMatrix, projectionMatrix);
 	drawPlayer(GameObjects.player, viewMatrix, projectionMatrix);
-	// drawApple(GameObject.apple, viewMatrixApple, projectionMatrixApple);
-	// drawFerrari(GameObject.ferrari, viewMatrixFerrari, projectionMatrixFerrari);
+	
+	// draw skybox
+	drawSkybox(viewMatrix, projectionMatrix);
 }
 
 
@@ -182,14 +186,21 @@ void drawScene() {
 void updateObjects(float elapsedTime) {
 	// update the scene objects
 	float timeDelta = elapsedTime - GameObjects.player->currentTime;
-	// printf("Time delta: %f\n", timeDelta);
+	
 	GameObjects.player->currentTime = elapsedTime;
-	// printf("GameObjects.player->speed: %f\n", GameObjects.player->speed);
-	GameObjects.player->position += GameObjects.player->direction * GameObjects.player->speed * 0.01f;
-	if (GameObjects.player->position.z < MAX_HEIGHT)
-		GameObjects.player->position.z += GameObjects.player->verticalSpeed * 0.01f;
-	// printf("Player position: %f, %f, %f\n", GameObjects.player->position.x, GameObjects.player->position.y, GameObjects.player->position.z);
 
+	GameObjects.player->position += GameObjects.player->direction * GameObjects.player->speed * 0.01f;
+
+	if (GameState.keyMap[KEY_SPACE] && GameObjects.player->position.z < MAX_HEIGHT)
+		GameObjects.player->position.z += GameObjects.player->verticalSpeed * 0.01f;
+	else if(GameState.keyMap[KEY_SPACE])
+		GameObjects.player->position.z = MAX_HEIGHT;
+
+	if (GameState.keyMap[KEY_B] && GameObjects.player->position.z > MIN_HEIGHT)
+		GameObjects.player->position.z -= GameObjects.player->verticalSpeed * 0.01f;
+	else if (GameState.keyMap[KEY_B])
+		GameObjects.player->position.z = MIN_HEIGHT;
+	
 }
 
 // -----------------------  Window callbacks ---------------------------------
@@ -253,6 +264,7 @@ void keyboardCb(unsigned char keyPressed, int mouseX, int mouseY) {
 		case 'c': // switch camera mode to first person
 			GameState.fpsCameraMode = !GameState.fpsCameraMode;
 			if (GameState.fpsCameraMode) {
+				GameState.sceneCamera = false;
 				printf("First person camera\n");
 				glutPassiveMotionFunc(mouseMotionCb);
 				glutWarpPointer(GameState.windowWidth / 2, GameState.windowHeight / 2);
@@ -264,8 +276,8 @@ void keyboardCb(unsigned char keyPressed, int mouseX, int mouseY) {
 			break;
 		case 'v': // switch camera mode to scene camera
 			GameState.sceneCamera = !GameState.sceneCamera;
-			GameState.fpsCameraMode = false;
 			if (GameState.sceneCamera) {
+				GameState.fpsCameraMode = false;
 				printf("Scene camera\n");
 				glutPassiveMotionFunc(NULL);
 			}
@@ -275,6 +287,9 @@ void keyboardCb(unsigned char keyPressed, int mouseX, int mouseY) {
 			break;
 		case ' ':
 			GameState.keyMap[KEY_SPACE] = true;
+			break;
+		case 'b':
+			GameState.keyMap[KEY_B] = true;
 			break;
 	default:
 		break;
@@ -286,6 +301,9 @@ void keyboardUpCb(unsigned char keyReleased, int mouseX, int mouseY) {
 	switch (keyReleased) {
 	case ' ':
 		GameState.keyMap[KEY_SPACE] = false;
+		break;
+	case 'b':
+		GameState.keyMap[KEY_B] = false;
 		break;
 	default:
 		break;
@@ -379,12 +397,12 @@ void movePlayerRight(float deltaAngle) {
 }
 
 void movePlayerUp(float deltaSpeed) {
-	printf("Player position: %f, %f, %f\n", GameObjects.player->position.x, GameObjects.player->position.y, GameObjects.player->position.z);
+	printf("Player up : position: %f, %f, %f\n", GameObjects.player->position.x, GameObjects.player->position.y, GameObjects.player->position.z);
 	GameObjects.player->verticalSpeed += deltaSpeed;
 }
 
 void movePlayerDown(float deltaSpeed) {
-	printf("Player position: %f, %f, %f\n", GameObjects.player->position.x, GameObjects.player->position.y, GameObjects.player->position.z);
+	printf("Player down : position: %f, %f, %f\n", GameObjects.player->position.x, GameObjects.player->position.y, GameObjects.player->position.z);
 	GameObjects.player->verticalSpeed -= deltaSpeed;
 }
 
@@ -396,7 +414,6 @@ void movePlayerDown(float deltaSpeed) {
  */
 
 void timerCb(int timerId) {
-
 	if (GameState.keyMap[KEY_UP_ARROW] == true)
 		movePlayerForward(PLAYER_SPEED_INCREMENT);
 
@@ -412,9 +429,8 @@ void timerCb(int timerId) {
 	if (GameState.keyMap[KEY_SPACE] == true)
 		movePlayerUp(PLAYER_UP_SPEED_INCREMENT);
 
-	if (GameState.keyMap[KEY_SHIFT_L] == true)
+	if (GameState.keyMap[KEY_B] == true)
 		movePlayerDown(PLAYER_UP_SPEED_INCREMENT);
-
 	
 	// update objects in the scene
 	updateObjects(GameState.elapsedTime);

@@ -24,6 +24,7 @@ void initSceneObjects();
 
 void drawTerrain(Terrain* Terrain, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
 void drawPlayer(Player* Player, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
+void drawSkybox(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
 
 // -----------------------  Clean up scene objects ----------------------------
 

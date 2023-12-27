@@ -21,8 +21,8 @@
 #define PLAYER_SPEED_MIN -0.2f
 #define PLAYER_VIEW_ANGLE_DELTA 2.0f
 
-#define MAX_HEIGHT 0.8f
-#define MIN_HEIGHT -0.2f
+#define MAX_HEIGHT 0.15f
+#define MIN_HEIGHT -0.15f
 
 
 enum { 
@@ -31,6 +31,7 @@ enum {
 	KEY_UP_ARROW, 
 	KEY_DOWN_ARROW, 
 	KEY_SPACE,
+	KEY_B,
 	KEY_SHIFT_L,
 	KEYS_COUNT
 };

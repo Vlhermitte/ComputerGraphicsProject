@@ -2,21 +2,12 @@
 
 #include "renderer.h"
 
-
-
-ObjectGeometry* floorGeometry = NULL;
 ObjectGeometry* TerrainGeometry = NULL;
 ObjectGeometry* PlayerGeometry = NULL;
-
-std::vector<ObjectGeometry*> AppleGeometries;
-std::vector<ObjectGeometry*> FerrariGeometries;
+ObjectGeometry* SkyboxGeometry = NULL;
 
 ShaderProgram commonShaderProgram;
-
-glm::mat4 modelMatrixFloor;
-glm::mat4 modelMatrixPlayer;
-glm::mat4 modelMatrixApple;
-glm::mat4 modelMatrixFerrari;
+SkyboxShaderProgram skyboxShaderProgram;
 
 bool useLighting = false;
 
@@ -25,20 +16,22 @@ bool useLighting = false;
 /**
  * \brief Load all shader programs.
  */
-void loadShaderPrograms()
-{
+void loadShaderPrograms() {
 
-	GLuint shaders[] = {
+	std::vector<GLuint> shaderList;
+
+	/*GLuint shaders[] = {
 	  pgr::createShaderFromFile(GL_VERTEX_SHADER, "vertexShader.vert"),
 	  pgr::createShaderFromFile(GL_FRAGMENT_SHADER, "fragementShader.frag"),
-	  0
-	};
+	};*/
 
-	commonShaderProgram.program = pgr::createProgram(shaders);
+	shaderList.push_back(pgr::createShaderFromFile(GL_VERTEX_SHADER, "vertexShader.vert"));
+	shaderList.push_back(pgr::createShaderFromFile(GL_FRAGMENT_SHADER, "fragementShader.frag"));
+
+	commonShaderProgram.program = pgr::createProgram(shaderList);
 	commonShaderProgram.locations.position = glGetAttribLocation(commonShaderProgram.program, "position");
 	commonShaderProgram.locations.normal = glGetAttribLocation(commonShaderProgram.program, "normal");
 	commonShaderProgram.locations.texCoord = glGetAttribLocation(commonShaderProgram.program, "texCoord");
-	commonShaderProgram.locations.color = glGetAttribLocation(commonShaderProgram.program, "color_v");
 
 	// material
 	commonShaderProgram.locations.ambient = glGetUniformLocation(commonShaderProgram.program, "material.ambient");
@@ -47,14 +40,17 @@ void loadShaderPrograms()
 	commonShaderProgram.locations.shininess = glGetUniformLocation(commonShaderProgram.program, "material.shininess");
 	commonShaderProgram.locations.useTexture = glGetUniformLocation(commonShaderProgram.program, "material.useTexture");
 	commonShaderProgram.locations.texSampler = glGetUniformLocation(commonShaderProgram.program, "texSampler");
-	
 
 	// other attributes and uniforms
 	commonShaderProgram.locations.PVM = glGetUniformLocation(commonShaderProgram.program, "PVM");
+	commonShaderProgram.locations.ViewMatrix = glGetUniformLocation(commonShaderProgram.program, "ViewMatrix");
+	commonShaderProgram.locations.ModelMatrix = glGetUniformLocation(commonShaderProgram.program, "ModelMatrix");
+	commonShaderProgram.locations.NormalMatrix = glGetUniformLocation(commonShaderProgram.program, "NormalMatrix");
+
 
 	// Testing if all attributes are found
 	assert(commonShaderProgram.locations.position != -1);
-	// assert(commonShaderProgram.locations.normal != -1);
+	assert(commonShaderProgram.locations.normal != -1);
 	assert(commonShaderProgram.locations.texCoord != -1);
 
 	// Testing if all uniforms are found
@@ -64,10 +60,36 @@ void loadShaderPrograms()
 	assert(commonShaderProgram.locations.shininess != -1);
 	assert(commonShaderProgram.locations.useTexture != -1);
 	assert(commonShaderProgram.locations.texSampler != -1);
+
 	assert(commonShaderProgram.locations.PVM != -1);
+	assert(commonShaderProgram.locations.ViewMatrix != -1);
+	assert(commonShaderProgram.locations.ModelMatrix != -1);
+	assert(commonShaderProgram.locations.NormalMatrix != -1);
 	// ...
 
 	commonShaderProgram.initialized = true;
+	shaderList.clear();
+
+	// Skybox Shaders
+
+	shaderList.push_back(pgr::createShaderFromFile(GL_VERTEX_SHADER, "skyboxVertexShader.vert"));
+	shaderList.push_back(pgr::createShaderFromFile(GL_FRAGMENT_SHADER, "skyboxFragmentShader.frag"));
+
+	skyboxShaderProgram.program = pgr::createProgram(shaderList);
+
+	skyboxShaderProgram.locations.screenCoord = glGetAttribLocation(skyboxShaderProgram.program, "screenCoord");
+	// get uniforms locations
+	skyboxShaderProgram.locations.skyboxSampler = glGetUniformLocation(skyboxShaderProgram.program, "skyboxSampler");
+	skyboxShaderProgram.locations.inversePVmatrix = glGetUniformLocation(skyboxShaderProgram.program, "inversePVmatrix");
+
+
+	// assertions (Here using MACRO WARN_IF because the skybox is not essential for the game to work properly)
+	WARN_IF(skyboxShaderProgram.locations.screenCoord == -1, "skyboxShaderProgram.locations.screenCoord == -1");
+	WARN_IF(skyboxShaderProgram.locations.skyboxSampler == -1, "skyboxShaderProgram.locations.skyboxSampler == -1");
+	WARN_IF(skyboxShaderProgram.locations.inversePVmatrix == -1, "skyboxShaderProgram.locations.inversePVmatrix == -1");
+
+	skyboxShaderProgram.initialized = true;
+	shaderList.clear();
 }
 
 /**
@@ -99,12 +121,74 @@ void initPlayer() {
 	CHECK_GL_ERROR();
 }
 
+void initSkybox() {
+	GLint screenCoordLoc = glGetAttribLocation(skyboxShaderProgram.program, "screenCoord");
+	CHECK_GL_ERROR();
+	static const float screenCoords[] = {
+		-1.0f, -1.0f,
+		1.0f, -1.0f,
+		-1.0f,  1.0f,
+		1.0f,  1.0f
+	};
+
+	SkyboxGeometry = new ObjectGeometry;
+
+	SkyboxGeometry->material.ambient = glm::vec3(0.4f);
+	SkyboxGeometry->material.diffuse = glm::vec3(0.4f);
+	SkyboxGeometry->material.specular = glm::vec3(0.4f);
+	SkyboxGeometry->material.shininess = 32.0f;
+
+	glGenVertexArrays(1, &SkyboxGeometry->vertexArrayObject);
+	glBindVertexArray(SkyboxGeometry->vertexArrayObject);
+
+	glGenBuffers(1, &(SkyboxGeometry->vertexBufferObject));
+	glBindBuffer(GL_ARRAY_BUFFER, SkyboxGeometry->vertexBufferObject);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(screenCoords), screenCoords, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(screenCoordLoc);
+	glVertexAttribPointer(screenCoordLoc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+	glBindVertexArray(0);
+	CHECK_GL_ERROR();
+
+	SkyboxGeometry->numTriangles = 2;
+	glActiveTexture(GL_TEXTURE0);
+	glGenTextures(1, &SkyboxGeometry->material.texture);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, SkyboxGeometry->material.texture);
+
+	const char* suffixes[] = { "posx", "negx", "posy", "negy", "posz", "negz" };
+	GLuint targets[] = {
+	  GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+	  GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
+	  GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
+	};
+
+	for (int i = 0; i < 6; i++) {
+		std::string texName = std::string(SKYBOX_PATH_NAME) + "/sh_" + suffixes[i] + ".jpg";
+		std::cout << "Loading cube map texture: " << texName << std::endl;
+		if (!pgr::loadTexImage2D(texName, targets[i])) {
+			pgr::dieWithError("Skybox cube map loading failed!");
+		}
+	}
+
+	glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+	// unbind the texture (just in case someone will mess up with texture calls later)
+	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+	CHECK_GL_ERROR();
+}
+
 
 void initSceneObjects() {
 	useLighting = true;
-
 	initTerrain();
 	initPlayer();
+	initSkybox();
 }
 
 // -----------------------  Drawing ---------------------------------
@@ -117,31 +201,35 @@ void setTransformUniforms(const glm::mat4& modelMatrix, const glm::mat4& viewMat
 	glm::mat4 PVM = projectionMatrix * viewMatrix * modelMatrix;
 
 	glUniformMatrix4fv(commonShaderProgram.locations.PVM, 1, GL_FALSE, glm::value_ptr(PVM));
+	glUniformMatrix4fv(commonShaderProgram.locations.ViewMatrix, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+	glUniformMatrix4fv(commonShaderProgram.locations.ModelMatrix, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+
+	const glm::mat3 modelRotationMatrix = glm::mat3(
+		modelMatrix[0],
+		modelMatrix[1],
+		modelMatrix[2]
+	);
+	glm::mat4 normalMatrix = glm::transpose(glm::inverse(glm::mat4(glm::mat3(modelRotationMatrix))));
+	glUniformMatrix4fv(commonShaderProgram.locations.NormalMatrix, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
+
 	CHECK_GL_ERROR();
 }
 
-void setMaterialUniforms(const Material& material, glm::vec4 color) {
-
-	if (useLighting) {
-		glUniform3fv(commonShaderProgram.locations.ambient, 1, glm::value_ptr(material.ambient));
-		glUniform3fv(commonShaderProgram.locations.diffuse, 1, glm::value_ptr(material.diffuse));
-		glUniform3fv(commonShaderProgram.locations.specular, 1, glm::value_ptr(material.specular));
-		glUniform1f(commonShaderProgram.locations.shininess, material.shininess);
-		CHECK_GL_ERROR();
-		if (material.texture != 0) {
-			glUniform1i(commonShaderProgram.locations.useTexture, 1);  // do texture sampling
-			glUniform1i(commonShaderProgram.locations.texSampler, 0);  // texturing unit 0 -> samplerID   [for the GPU linker]
-			glActiveTexture(GL_TEXTURE0 + 0);						   // texturing unit 0 -> to be bound [for OpenGL BindTexture]
-			glBindTexture(GL_TEXTURE_2D, material.texture);
-		}
-		else {
-			glUniform1i(commonShaderProgram.locations.useTexture, 0);  // do not sample the texture
-		}
+void setMaterialUniforms(const Material& material) {
+	glUniform3fv(commonShaderProgram.locations.ambient, 1, glm::value_ptr(material.ambient));
+	glUniform3fv(commonShaderProgram.locations.diffuse, 1, glm::value_ptr(material.diffuse));
+	glUniform3fv(commonShaderProgram.locations.specular, 1, glm::value_ptr(material.specular));
+	glUniform1f(commonShaderProgram.locations.shininess, material.shininess);
+	CHECK_GL_ERROR();
+	if (material.texture != 0) {
+		glUniform1i(commonShaderProgram.locations.useTexture, 1);  // do texture sampling
+		glUniform1i(commonShaderProgram.locations.texSampler, 0);  // texturing unit 0 -> samplerID   [for the GPU linker]
+		glActiveTexture(GL_TEXTURE0 + 0);						   // texturing unit 0 -> to be bound [for OpenGL BindTexture]
+		glBindTexture(GL_TEXTURE_2D, material.texture);
 	}
 	else {
-		// FOR NOW WE SET THE COLOR MANUALLY
-		glUniform4fv(commonShaderProgram.locations.color, 1, glm::value_ptr(color));
-		CHECK_GL_ERROR();
+		glUniform1i(commonShaderProgram.locations.useTexture, 0);  // do not sample the texture
 	}
 }
 
@@ -156,10 +244,8 @@ void drawPlayer(Player* Player, const glm::mat4& viewMatrix, const glm::mat4& pr
 
 	// send matrices to the vertex & fragment shader
 	setTransformUniforms(modelMatrix, viewMatrix, projectionMatrix);
-
 	// set material uniforms
-	glm::vec4 color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	setMaterialUniforms(PlayerGeometry->material, color);
+	setMaterialUniforms(PlayerGeometry->material);
 
 	glBindVertexArray(PlayerGeometry->vertexArrayObject);
 	glDrawElements(GL_TRIANGLES, PlayerGeometry->numTriangles * 3, GL_UNSIGNED_INT, 0);
@@ -179,10 +265,9 @@ void drawTerrain(Terrain* Terrain, const glm::mat4& viewMatrix, const glm::mat4&
 
 	// send matrices to the vertex & fragment shader
 	setTransformUniforms(modelMatrix, viewMatrix, projectionMatrix);
-
+	TerrainGeometry->material.shininess = 30.0f;
 	// set material uniforms
-	glm::vec4 color = glm::vec4(0.1f, 1.0f, 0.1f, 1.0f);
-	setMaterialUniforms(TerrainGeometry->material, color);
+	setMaterialUniforms(TerrainGeometry->material);
 
 	// draw geometry
 	glBindVertexArray(TerrainGeometry->vertexArrayObject);
@@ -192,10 +277,30 @@ void drawTerrain(Terrain* Terrain, const glm::mat4& viewMatrix, const glm::mat4&
 	glUseProgram(0);
 }
 
+void drawSkybox(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
+
+	glUseProgram(skyboxShaderProgram.program);
+	glm::mat4 matrix = projectionMatrix * viewMatrix;
+
+	// crate view rotation matrix by using view matrix with cleared translation (we must rotate by 90° on X-axis because we start on Top view)
+	glm::mat4 viewRotation = glm::rotate(viewMatrix, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	viewRotation[3] = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+	glm::mat4 inversePVmatrix = glm::inverse(projectionMatrix * viewRotation);
+	glUniformMatrix4fv(skyboxShaderProgram.locations.inversePVmatrix, 1, GL_FALSE, glm::value_ptr(inversePVmatrix));
+	glUniform1i(skyboxShaderProgram.locations.skyboxSampler, 0);
+
+	glBindVertexArray(SkyboxGeometry->vertexArrayObject);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, SkyboxGeometry->material.texture);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+	glBindVertexArray(0);
+	glUseProgram(0);
+}
+
 // -----------------------  Cleanup scene objects ----------------------------
 
 void cleanupGeometry(ObjectGeometry* geometry) {
-
 	glDeleteVertexArrays(1, &(geometry->vertexArrayObject));
 	glDeleteBuffers(1, &(geometry->elementBufferObject));
 	glDeleteBuffers(1, &(geometry->vertexBufferObject));
@@ -204,7 +309,8 @@ void cleanupGeometry(ObjectGeometry* geometry) {
 
 void cleanupModels() {
 	cleanupGeometry(PlayerGeometry);
-	cleanupGeometry(floorGeometry);
+	cleanupGeometry(TerrainGeometry);
+	cleanupGeometry(SkyboxGeometry);
 }
 
 // -----------------------  Loading .obj file ---------------------------------
