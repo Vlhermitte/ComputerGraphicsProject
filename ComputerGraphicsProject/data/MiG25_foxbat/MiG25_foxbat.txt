@@ -1,0 +1,12 @@
+DownloadModelFormat: OBJ
+GeometryFile: MiG25_foxbat.obj
+MaterialFile: MiG25_foxbat.mtl
+PreviewFile: MiG25_foxbat.png
+OtherFiles: kridlo copy.tga, ocas copy copy.tga, ocas_spodek copy.tga, trup copy.tga, trysky copy.tga vyskovka copy.tga
+DownloadedFromURL: service.felk.cvut.cz/courses/Y36MGA/prj/uricam1
+DateOfDownload: 28.5.2007
+CreatedBy: Michal Uricar
+CreatedIn: 3ds max
+UploadedBy: Michal Uricar
+Description: Model of airplane MiG25 Foxbat
+NumberOfPolygons: 5218

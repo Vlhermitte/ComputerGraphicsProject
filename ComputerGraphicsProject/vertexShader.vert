@@ -37,13 +37,14 @@ uniform Material material;  // current material
 // Outgoing attributes to Fragment shader
 smooth out vec2 texCoord_v;  // outgoing texture coordinates
 smooth out vec4 color_v;     // outgoing fragment color
+out vec4 positionRelativeToCamera_v;
 
 Light sun;
 Light playerLight;
 
 void SetupLight() {
 	// Light parameters
-	sun.position = vec3(1.0f, 1.0f, 0.0f);
+	sun.position = vec3(1.0f, 1.0f, 1.0f);
 
 	sun.ambient  = vec3(0.2f, 0.2f, 0.2f);
 	sun.diffuse  = vec3(0.8f, 0.8f, 0.8f);
@@ -63,14 +64,6 @@ void SetupLight() {
 vec4 directionalLight(Light light, Material material, vec3 vertexPosition, vec3 vertexNormal) {
 
   vec3 ret = vec3(0.0);
-
-  // use the material and light structures to obtain the surface and light properties
-  // the vertexPosition and vertexNormal variables contain transformed surface position and normal
-  // store the ambient, diffuse and specular terms to the ret variable
-  // glsl provides some built-in functions, for example: reflect, normalize, pow, dot
-  // for directional lights, light.position contains the direction
-  // everything is expressed in the view coordinate system -> eye/camera is in the origin
-
   vec3 ambient = light.ambient * material.ambient;
 
   float cosAlpha = dot(vertexNormal, light.position);
@@ -90,12 +83,7 @@ vec4 spotLight(Light light, Material material, vec3 vertexPosition, vec3 vertexN
 
 	vec3 ret = vec3(0.0);
 
-	// use the material and light structures to obtain the surface and light properties
-	// the vertexPosition and vertexNormal variables contain transformed surface position and normal
-	// store the ambient, diffuse and specular terms to the ret variable
-	// for spot lights, light.position contains the light position
-	// everything is expressed in the view coordinate system -> eye/camera is in the origin
-
+	// TODO: Implement spot light
 	return vec4(ret, 1.0);
 }
 
@@ -107,17 +95,21 @@ void main() {
 
 	// eye-coordinates position and normal of vertex
 	vec3 vertexPosition = (ViewMatrix * ModelMatrix * vec4(position, 1.0)).xyz;         // vertex in eye coordinates
-	vec3 vertexNormal   = normalize( (ViewMatrix * NormalMatrix * vec4(normal, 0.0) ).xyz);   // normal in eye coordinates by NormalMatrix
+	vec3 vertexNormal = normalize((ViewMatrix * NormalMatrix * vec4(normal, 0.0)).xyz);   // normal in eye coordinates by NormalMatrix
 
 	// initialize the output color with the global ambient term
-	vec3 globalAmbientLight = vec3(0.4f);
+	vec3 globalAmbientLight = vec3(0.5f);
 	vec4 outputColor = vec4(material.ambient * globalAmbientLight, 0.0);
 
 	// accumulate contributions from all lights
 	outputColor += directionalLight(sun, material, vertexPosition, vertexNormal);
-	outputColor += spotLight(playerLight, material, vertexPosition, vertexNormal);
+	// outputColor += spotLight(playerLight, material, vertexPosition, vertexNormal);
+
+	// For fog
+	vec4 positionRelativeToCamera = ViewMatrix * ModelMatrix * vec4(position, 1.0);
 
 	gl_Position = PVM * vec4(position, 1.0);
 	color_v = outputColor;
 	texCoord_v = texCoord;
+	positionRelativeToCamera_v = positionRelativeToCamera;
 }

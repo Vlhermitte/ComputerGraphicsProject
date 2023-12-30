@@ -14,9 +14,10 @@
     } while (0)
 
 #define PLAYER_MODEL_NAME "data/ghoul/ghoul.obj"
-#define TERRAIN_MODEL_NAME "data/terrainV2/terrain.obj"
+#define TERRAIN_MODEL_NAME "data/terrainV3/terrain.obj"
 #define FERRARI_MODEL_NAME "data/FerrariF399/FerrariF399.obj"
-#define APPLE_MODEL_NAME "data/apple/apple.obj"
+#define FOXBAT_MODEL_NAME "data/MiG25_foxbat/MiG25_foxbat.obj"
+#define F5ETIGERII_MODEL_NAME "data/F5ETigerII/F-5ETigerII.obj"
 
 #define SKYBOX_PATH_NAME "data/skybox"
 
@@ -52,6 +53,8 @@ typedef struct _ShaderProgram {
 		GLint ViewMatrix;
 		GLint ModelMatrix;
 		GLint NormalMatrix;
+
+		GLint fogOn;
 	} locations;
 
 
@@ -159,6 +162,14 @@ typedef struct _Player : public Object {
 	float viewAngle; // in degrees
 
 } Player;
+
+typedef struct _Foxbat : public Object {
+
+} Foxbat;
+
+typedef struct _F5ETigerII : public Object {
+
+} F5ETigerII;
 
 
 

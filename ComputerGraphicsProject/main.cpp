@@ -2,11 +2,6 @@
 #include "main.h"
 
 
-struct _GameObjects {
-	Player* player;
-	Terrain* terrain;
-} GameObjects;
-
 struct _GameState {
 	bool wireframeMode; // false
 	bool fpsCameraMode; // false
@@ -14,6 +9,7 @@ struct _GameState {
 	float cameraElevationAngle; // in degrees
 	float elapsedTime; // in seconds
 	bool keyMap[KEYS_COUNT]; 
+	bool fogOn; // false
 
 	int windowWidth; // 800 (currently not used)
 	int windowHeight; // 800 (currently not used)
@@ -35,6 +31,8 @@ void initApplication() {
 	initSceneObjects();
 
 	GameObjects.player = NULL;
+	GameObjects.foxbat = NULL;
+	GameObjects.f5etigerii = NULL;
 	GameObjects.terrain = NULL;
 
 	// init your Application
@@ -70,10 +68,23 @@ void restartGame() {
 
 	GameState.elapsedTime = 0.01f * (float)glutGet(GLUT_ELAPSED_TIME);
 
-	if (GameObjects.player == NULL)
+	if (GameObjects.player == NULL) {
 		GameObjects.player = new Player();
-	if (GameObjects.terrain == NULL)
+		GameObjects.player->isInitialized = true;
+	}
+	if (GameObjects.terrain == NULL) {
 		GameObjects.terrain = new Terrain();
+		GameObjects.terrain->isInitialized = true;
+	}
+	if (GameObjects.foxbat == NULL) {
+		GameObjects.foxbat = new Foxbat();
+		GameObjects.foxbat->isInitialized = true;
+	}
+	if (GameObjects.f5etigerii == NULL) {
+		GameObjects.f5etigerii = new F5ETigerII();
+		GameObjects.f5etigerii->isInitialized = true;
+	}
+		
 
 	// GameObjects reinitialization
 	GameObjects.player->position = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -84,6 +95,21 @@ void restartGame() {
 	GameObjects.player->destroyed = false;
 	GameObjects.player->startTime = GameState.elapsedTime;
 	GameObjects.player->currentTime = GameObjects.player->startTime;
+	GameObjects.player->isInitialized = true;
+
+	// Reinitialization Foxbat object
+	GameObjects.foxbat->position = glm::vec3(0.1f, 0.3f, 0.0f);
+	GameObjects.foxbat->direction = glm::vec3(0.8f, 0.5f, 0.0f);
+	GameObjects.foxbat->speed = 0.0f;
+	GameObjects.foxbat->size = FOXBAT_SIZE;
+	GameObjects.foxbat->destroyed = false;
+
+	// Reinitialization F5Tirger object
+	GameObjects.f5etigerii->position = glm::vec3(-0.1f, 0.3f, 0.0f);
+	GameObjects.f5etigerii->direction = glm::vec3(-0.8f, 0.5f, 0.0f);
+	GameObjects.f5etigerii->speed = 0.0f;
+	GameObjects.f5etigerii->size = F5TIGER_SIZE;
+	GameObjects.f5etigerii->destroyed = false;
 
 	// Setting up the terrain with position (0,0,MIN_HEIGHT) (xyz)
 	GameObjects.terrain->position = glm::vec3(0.0f, 0.0f, MIN_HEIGHT);
@@ -96,6 +122,8 @@ void restartGame() {
 		glutPassiveMotionFunc(NULL);
 	}
 	GameState.cameraElevationAngle = 0.0f;
+
+	GameState.fogOn = false;
 
 	// reset key map
 	for (int i = 0; i < KEYS_COUNT; i++)
@@ -117,7 +145,9 @@ void cleanUpObjects() {
  * \brief Draw all scene objects.
  */
 void drawScene() {
-	// std::cout << "Drawing scene" << std::endl;
+	glUseProgram(commonShaderProgram.program);
+	glUniform1i(commonShaderProgram.locations.fogOn, GameState.fogOn);
+	glUseProgram(0);
 
 	// setup parallel projection
 	glm::mat4 orthoProjectionMatrix = glm::ortho(
@@ -169,11 +199,11 @@ void drawScene() {
 	CHECK_GL_ERROR();
 
 	// draw the scene objects
-	drawTerrain(GameObjects.terrain, viewMatrix, projectionMatrix);
-	drawPlayer(GameObjects.player, viewMatrix, projectionMatrix);
+	drawObjects(GameObjects, viewMatrix, projectionMatrix);
 	
-	// draw skybox
-	drawSkybox(viewMatrix, projectionMatrix);
+	// draw skybox (only if the fog is off)
+	if (!GameState.fogOn)
+		drawSkybox(viewMatrix, projectionMatrix);
 }
 
 
@@ -191,6 +221,7 @@ void updateObjects(float elapsedTime) {
 
 	GameObjects.player->position += GameObjects.player->direction * GameObjects.player->speed * 0.01f;
 
+	// TODO FIX THIS
 	if (GameState.keyMap[KEY_SPACE] && GameObjects.player->position.z < MAX_HEIGHT)
 		GameObjects.player->position.z += GameObjects.player->verticalSpeed * 0.01f;
 	else if(GameState.keyMap[KEY_SPACE])
@@ -284,6 +315,11 @@ void keyboardCb(unsigned char keyPressed, int mouseX, int mouseY) {
 			else {
 				printf("Top view Camera\n");
 			}
+			break;
+		case 'f':
+			GameState.fogOn = !GameState.fogOn;
+			// print fog on or fog off
+			GameState.fogOn ? printf("Fog On\n") : printf("Fog Off\n");
 			break;
 		case ' ':
 			GameState.keyMap[KEY_SPACE] = true;
