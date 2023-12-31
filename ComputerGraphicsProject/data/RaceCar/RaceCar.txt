@@ -1,0 +1,12 @@
+#DownloadModelFormat: OBJ
+#GeometryFile: RaceCar.obj
+#MaterialFile: RaceCar.mtl
+#PreviewFile: RaceCar.jpg
+#OtherFiles: Car_Texture_1.png
+#DownloadedFromURL: https://free3d.com/3d-model/cartoon-vehicles-low-poly-cars-free-874937.html
+#DateOfDownload: 6.5.2021
+#CreatedBy: orchakoff
+#CreatedIn: Blender
+#UploadedBy: Filip Ruta
+#Description: Race car model
+#NumberOfPolygons: 1933
