@@ -34,17 +34,20 @@ uniform mat4 NormalMatrix;
 
 uniform Material material;  // current material
 
+uniform float time;         // time used for simulation of moving lights (such as sun)
+
 // Outgoing attributes to Fragment shader
 smooth out vec2 texCoord_v;  // outgoing texture coordinates
 smooth out vec4 color_v;     // outgoing fragment color
 out vec4 positionRelativeToCamera_v;
 
 Light sun;
+float sunSpeed = 0.25f;		// sun speed to simulate night and day cycle
 Light playerLight;
 
 void SetupLight() {
 	// Light parameters
-	sun.position = vec3(1.0f, 1.0f, 1.0f);
+	// sun.position = vec3(1.0f, 1.0f, 1.0f);
 
 	sun.ambient  = vec3(0.2f, 0.2f, 0.2f);
 	sun.diffuse  = vec3(0.8f, 0.8f, 0.8f);
@@ -56,9 +59,7 @@ void SetupLight() {
 	playerLight.spotCosCutOff = 0.95f;
 	playerLight.spotExponent  = 0.0;
 
-	float angle = 0.0f;
-	vec3 sunWorldPos = vec3(sin(angle), 0.0, cos(angle));
-	sun.position = (ViewMatrix * vec4(sunWorldPos, 0.0)).xyz;
+	sun.position = (ViewMatrix * vec4(cos(time * sunSpeed), 0.0f, sin(time * sunSpeed), 0.0f)).xyz;
 }
 
 vec4 directionalLight(Light light, Material material, vec3 vertexPosition, vec3 vertexNormal) {
