@@ -17,6 +17,7 @@ typedef struct _GameObjects {
 	Terrain* terrain;
 	Foxbat* foxbat;
 	F5ETigerII* f5etigerii;
+	Object* car;
 } GameObjectsList;
 
 extern GameObjectsList GameObjects;

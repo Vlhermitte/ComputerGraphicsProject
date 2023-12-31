@@ -5,6 +5,7 @@
 
 #include "pgr.h"
 #include "renderer.h"
+#include "spline.h"
 
 constexpr int WINDOW_WIDTH = 800;
 constexpr int WINDOW_HEIGHT = 800;
@@ -14,6 +15,7 @@ constexpr char WINDOW_TITLE[] = "Project Computer Graphics Valentin Lhermitte";
 void initApplication();
 void finalizeApplication();
 void restartGame();
+void reinisialiseObjects();
 void cleanUpObjects();
 
 // -----------------------  Scene objects ---------------------------------

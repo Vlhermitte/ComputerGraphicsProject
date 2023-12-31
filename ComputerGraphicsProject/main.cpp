@@ -24,6 +24,9 @@ void initApplication() {
 	// init OpenGL
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glEnable(GL_DEPTH_TEST);
+	// initialize random seed
+	srand((unsigned int)time(NULL));
+
 	// - all programs (shaders), buffers, textures, ...
 	loadShaderPrograms();
 
@@ -34,6 +37,7 @@ void initApplication() {
 	GameObjects.foxbat = NULL;
 	GameObjects.f5etigerii = NULL;
 	GameObjects.terrain = NULL;
+	GameObjects.car = NULL;
 
 	// init your Application
 	// - setup the initial application state
@@ -66,8 +70,27 @@ void restartGame() {
 	// delete all objects
 	cleanUpObjects();
 
-	GameState.elapsedTime = 0.01f * (float)glutGet(GLUT_ELAPSED_TIME);
+	GameState.elapsedTime = 0.001f * (float)glutGet(GLUT_ELAPSED_TIME); // milliseconds => seconds
 
+	// Objects reinisialisation
+	reinisialiseObjects();
+
+	// GameState reinitialization
+	if (GameState.fpsCameraMode or GameState.sceneCamera) {
+		GameState.fpsCameraMode = false;
+		GameState.sceneCamera = false;
+		glutPassiveMotionFunc(NULL);
+	}
+	GameState.cameraElevationAngle = 0.0f;
+
+	GameState.fogOn = false;
+
+	// reset key map
+	for (int i = 0; i < KEYS_COUNT; i++)
+		GameState.keyMap[i] = false;
+}
+
+void reinisialiseObjects() {
 	if (GameObjects.player == NULL) {
 		GameObjects.player = new Player();
 		GameObjects.player->isInitialized = true;
@@ -84,9 +107,12 @@ void restartGame() {
 		GameObjects.f5etigerii = new F5ETigerII();
 		GameObjects.f5etigerii->isInitialized = true;
 	}
-		
+	if (GameObjects.car == NULL) {
+		GameObjects.car = new Object();
+		GameObjects.car->isInitialized = true;
+	}
 
-	// GameObjects reinitialization
+	// Reinitialization Player
 	GameObjects.player->position = glm::vec3(0.0f, 0.0f, 0.0f);
 	GameObjects.player->viewAngle = 90.0f; // degrees
 	GameObjects.player->direction = glm::vec3(cos(glm::radians(GameObjects.player->viewAngle)), sin(glm::radians(GameObjects.player->viewAngle)), 0.0f);
@@ -95,14 +121,15 @@ void restartGame() {
 	GameObjects.player->destroyed = false;
 	GameObjects.player->startTime = GameState.elapsedTime;
 	GameObjects.player->currentTime = GameObjects.player->startTime;
-	GameObjects.player->isInitialized = true;
 
 	// Reinitialization Foxbat object
 	GameObjects.foxbat->position = glm::vec3(0.1f, 0.3f, 0.0f);
+	GameObjects.foxbat->initPosition = GameObjects.foxbat->position;
 	GameObjects.foxbat->direction = glm::vec3(0.8f, 0.5f, 0.0f);
-	GameObjects.foxbat->speed = 0.0f;
+	GameObjects.foxbat->speed = 0.4f;
 	GameObjects.foxbat->size = FOXBAT_SIZE;
 	GameObjects.foxbat->destroyed = false;
+	GameObjects.foxbat->isMoving = false;
 
 	// Reinitialization F5Tirger object
 	GameObjects.f5etigerii->position = glm::vec3(-0.1f, 0.3f, 0.0f);
@@ -111,23 +138,16 @@ void restartGame() {
 	GameObjects.f5etigerii->size = F5TIGER_SIZE;
 	GameObjects.f5etigerii->destroyed = false;
 
+	// Reinitialization Car object
+	GameObjects.car->position = glm::vec3(0.8f, 0.15f, -0.3f);
+	GameObjects.car->direction = glm::vec3(0.1f, 0.1f, 0.0f);
+	GameObjects.car->speed = 0.0f;
+	GameObjects.car->size = CAR_SIZE;
+	GameObjects.car->destroyed = false;
+
 	// Setting up the terrain with position (0,0,MIN_HEIGHT) (xyz)
 	GameObjects.terrain->position = glm::vec3(0.0f, 0.0f, MIN_HEIGHT);
 	GameObjects.terrain->size = TERRAIN_SIZE;
-
-	// GameState reinitialization
-	if (GameState.fpsCameraMode or GameState.sceneCamera) {
-		GameState.fpsCameraMode = false;
-		GameState.sceneCamera = false;
-		glutPassiveMotionFunc(NULL);
-	}
-	GameState.cameraElevationAngle = 0.0f;
-
-	GameState.fogOn = false;
-
-	// reset key map
-	for (int i = 0; i < KEYS_COUNT; i++)
-		GameState.keyMap[i] = false;
 }
 
 /**
@@ -198,6 +218,10 @@ void drawScene() {
 
 	CHECK_GL_ERROR();
 
+	glUseProgram(commonShaderProgram.program);
+	glUniform1f(commonShaderProgram.locations.time, GameState.elapsedTime);
+	glUseProgram(0);
+
 	// draw the scene objects
 	drawObjects(GameObjects, viewMatrix, projectionMatrix);
 	
@@ -217,8 +241,8 @@ void updateObjects(float elapsedTime) {
 	// update the scene objects
 	float timeDelta = elapsedTime - GameObjects.player->currentTime;
 	
+	// Update Player
 	GameObjects.player->currentTime = elapsedTime;
-
 	GameObjects.player->position += GameObjects.player->direction * GameObjects.player->speed * 0.01f;
 
 	// TODO FIX THIS
@@ -231,6 +255,17 @@ void updateObjects(float elapsedTime) {
 		GameObjects.player->position.z -= GameObjects.player->verticalSpeed * 0.01f;
 	else if (GameState.keyMap[KEY_B])
 		GameObjects.player->position.z = MIN_HEIGHT;
+
+
+	// Update Foxbat (airplane)
+	if (GameObjects.foxbat->isMoving) {
+		GameObjects.foxbat->currentTime = elapsedTime;
+		float curveParamT = GameObjects.foxbat->speed * (GameObjects.foxbat->currentTime - GameObjects.foxbat->startTime);
+		glm::vec3 closedCurve = evaluateClosedCurve(curveData, curveSize, curveParamT);
+		GameObjects.foxbat->position = GameObjects.foxbat->initPosition + closedCurve;
+		GameObjects.foxbat->direction = glm::normalize(evaluateClosedCurve_1stDerivative(curveData, curveSize, curveParamT));
+	}
+
 	
 }
 
@@ -320,6 +355,10 @@ void keyboardCb(unsigned char keyPressed, int mouseX, int mouseY) {
 			GameState.fogOn = !GameState.fogOn;
 			// print fog on or fog off
 			GameState.fogOn ? printf("Fog On\n") : printf("Fog Off\n");
+			break;
+		case 'm':
+			GameObjects.foxbat->isMoving = !GameObjects.foxbat->isMoving;
+			GameObjects.foxbat->isMoving ? printf("Foxbat moving\n") : printf("Foxbat stopped\n");
 			break;
 		case ' ':
 			GameState.keyMap[KEY_SPACE] = true;
@@ -450,6 +489,8 @@ void movePlayerDown(float deltaSpeed) {
  */
 
 void timerCb(int timerId) {
+	GameState.elapsedTime = 0.001f * (float)glutGet(GLUT_ELAPSED_TIME); // milliseconds => seconds
+
 	if (GameState.keyMap[KEY_UP_ARROW] == true)
 		movePlayerForward(PLAYER_SPEED_INCREMENT);
 

@@ -15,9 +15,9 @@
 
 #define PLAYER_MODEL_NAME "data/ghoul/ghoul.obj"
 #define TERRAIN_MODEL_NAME "data/terrainV3/terrain.obj"
-#define FERRARI_MODEL_NAME "data/FerrariF399/FerrariF399.obj"
 #define FOXBAT_MODEL_NAME "data/MiG25_foxbat/MiG25_foxbat.obj"
 #define F5ETIGERII_MODEL_NAME "data/F5ETigerII/F-5ETigerII.obj"
+#define CAR_MODEL_NAME "data/RaceCar/RaceCar.obj"
 
 #define SKYBOX_PATH_NAME "data/skybox"
 
@@ -39,6 +39,7 @@ typedef struct _ShaderProgram {
 		GLint color;		// used only if no lighting 
 		GLint normal;
 		GLint texCoord;
+		GLint time;
 
 		// material locations
 		GLint ambient;
@@ -164,12 +165,16 @@ typedef struct _Player : public Object {
 } Player;
 
 typedef struct _Foxbat : public Object {
-
+	bool isMoving;
+	float rotationSpeed;
+	glm::vec3 initPosition;
 } Foxbat;
 
 typedef struct _F5ETigerII : public Object {
 
 } F5ETigerII;
+
+
 
 
 

@@ -7,6 +7,7 @@ ObjectGeometry* PlayerGeometry = NULL;
 ObjectGeometry* SkyboxGeometry = NULL;
 std::vector<ObjectGeometry*> FoxBatGeometries;
 std::vector<ObjectGeometry*> F5ETigerIIGeometries;
+std::vector<ObjectGeometry*> CarGeometries;
 
 ShaderProgram commonShaderProgram;
 SkyboxShaderProgram skyboxShaderProgram;
@@ -50,7 +51,7 @@ void loadShaderPrograms() {
 	commonShaderProgram.locations.ViewMatrix = glGetUniformLocation(commonShaderProgram.program, "ViewMatrix");
 	commonShaderProgram.locations.ModelMatrix = glGetUniformLocation(commonShaderProgram.program, "ModelMatrix");
 	commonShaderProgram.locations.NormalMatrix = glGetUniformLocation(commonShaderProgram.program, "NormalMatrix");
-
+	commonShaderProgram.locations.time = glGetUniformLocation(commonShaderProgram.program, "time");
 	commonShaderProgram.locations.fogOn = glGetUniformLocation(commonShaderProgram.program, "fogOn");
 
 
@@ -72,6 +73,7 @@ void loadShaderPrograms() {
 	assert(commonShaderProgram.locations.ModelMatrix != -1);
 	assert(commonShaderProgram.locations.NormalMatrix != -1);
 	
+	WARN_IF(commonShaderProgram.locations.time == -1, "commonShaderProgram.locations.time == -1");
 	WARN_IF(commonShaderProgram.locations.fogOn == -1, "commonShaderProgram.locations.fogOn == -1");
 
 	commonShaderProgram.initialized = true;
@@ -202,7 +204,8 @@ void initSceneObjects() {
 	initPlayer();
 	initSkybox();
 	initModel(FOXBAT_MODEL_NAME, &FoxBatGeometries);
-	// initModel(F5ETIGERII_MODEL_NAME, &F5ETigerIIGeometries);
+	initModel(F5ETIGERII_MODEL_NAME, &F5ETigerIIGeometries);
+	initModel(CAR_MODEL_NAME, &CarGeometries);
 }
 
 // -----------------------  Drawing ---------------------------------
@@ -321,11 +324,11 @@ void drawSkybox(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) 
 }
 
 void drawModel(Object* Model, std::vector<ObjectGeometry*> ModelGeometry, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
-	if (Model->isInitialized) {
+	if (Model->isInitialized && !Model->destroyed) {
 		glUseProgram(commonShaderProgram.program);
 
 		// prepare modelling transform matrix
-		glm::mat4 modelMatrix = alignObject(Model->position, -(Model->direction), glm::vec3(0.0f, 0.0f, 1.0f));
+		glm::mat4 modelMatrix = alignObject(Model->position, (Model->direction), glm::vec3(0.0f, 0.0f, 1.0f));
 		modelMatrix = glm::rotate(modelMatrix, glm::radians(180.0f), glm::vec3(0, 1, 0));
 
 		modelMatrix = glm::scale(modelMatrix, glm::vec3(Model->size, Model->size, Model->size));
@@ -342,9 +345,6 @@ void drawModel(Object* Model, std::vector<ObjectGeometry*> ModelGeometry, const 
 		glBindVertexArray(0);
 		glUseProgram(0);
 	}
-	else {
-		std::cerr << "Model not initialised" << std::endl;
-	}
 }
 
 void drawObjects(GameObjectsList GameObjects, glm::mat4 viewMatrix, glm::mat4 projectionMatrix) {
@@ -352,6 +352,7 @@ void drawObjects(GameObjectsList GameObjects, glm::mat4 viewMatrix, glm::mat4 pr
 	drawPlayer(GameObjects.player, viewMatrix, projectionMatrix);
 	drawModel(GameObjects.foxbat, FoxBatGeometries, viewMatrix, projectionMatrix);
 	drawModel(GameObjects.f5etigerii, F5ETigerIIGeometries, viewMatrix, projectionMatrix);
+	drawModel(GameObjects.car, CarGeometries, viewMatrix, projectionMatrix);
 }
 
 

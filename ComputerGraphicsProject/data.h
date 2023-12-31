@@ -14,6 +14,7 @@
 #define FLOOR_SIZE	1.0f
 #define FOXBAT_SIZE   0.1f
 #define F5TIGER_SIZE   0.1f
+#define CAR_SIZE   0.1f
 
 #define CAMERA_ELEVATION_MAX 70.0f
 
@@ -38,19 +39,6 @@ enum {
 	KEYS_COUNT
 };
 
-//const float floorVertices[] = {
-//	 -0.5f, -0.5f, 0.5f,
-//	  0.5f, -0.5f, 0.5f,
-//	  0.5f,  0.5f, 0.5f,
-//	 -0.5f,  0.5f, 0.5f,
-//
-//};
-//
-//
-//const unsigned int floorIndices[] = {
-//	0, 1, 2,
-//	2, 3, 0
-//};
 
 const float floorH = 0.25f;
 
