@@ -35,7 +35,6 @@ void initApplication() {
 
 	GameObjects.player = NULL;
 	GameObjects.foxbat = NULL;
-	GameObjects.f5etigerii = NULL;
 	GameObjects.terrain = NULL;
 	GameObjects.car = NULL;
 
@@ -103,10 +102,6 @@ void reinisialiseObjects() {
 		GameObjects.foxbat = new Foxbat();
 		GameObjects.foxbat->isInitialized = true;
 	}
-	if (GameObjects.f5etigerii == NULL) {
-		GameObjects.f5etigerii = new F5ETigerII();
-		GameObjects.f5etigerii->isInitialized = true;
-	}
 	if (GameObjects.car == NULL) {
 		GameObjects.car = new Object();
 		GameObjects.car->isInitialized = true;
@@ -130,13 +125,6 @@ void reinisialiseObjects() {
 	GameObjects.foxbat->size = FOXBAT_SIZE;
 	GameObjects.foxbat->destroyed = false;
 	GameObjects.foxbat->isMoving = false;
-
-	// Reinitialization F5Tirger object
-	GameObjects.f5etigerii->position = glm::vec3(-0.1f, 0.3f, 0.0f);
-	GameObjects.f5etigerii->direction = glm::vec3(-0.8f, 0.5f, 0.0f);
-	GameObjects.f5etigerii->speed = 0.0f;
-	GameObjects.f5etigerii->size = F5TIGER_SIZE;
-	GameObjects.f5etigerii->destroyed = false;
 
 	// Reinitialization Car object
 	GameObjects.car->position = glm::vec3(0.8f, 0.15f, -0.3f);

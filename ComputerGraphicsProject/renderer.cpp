@@ -6,7 +6,6 @@ ObjectGeometry* TerrainGeometry = NULL;
 ObjectGeometry* PlayerGeometry = NULL;
 ObjectGeometry* SkyboxGeometry = NULL;
 std::vector<ObjectGeometry*> FoxBatGeometries;
-std::vector<ObjectGeometry*> F5ETigerIIGeometries;
 std::vector<ObjectGeometry*> CarGeometries;
 
 ShaderProgram commonShaderProgram;
@@ -204,7 +203,6 @@ void initSceneObjects() {
 	initPlayer();
 	initSkybox();
 	initModel(FOXBAT_MODEL_NAME, &FoxBatGeometries);
-	initModel(F5ETIGERII_MODEL_NAME, &F5ETigerIIGeometries);
 	initModel(CAR_MODEL_NAME, &CarGeometries);
 }
 
@@ -351,7 +349,6 @@ void drawObjects(GameObjectsList GameObjects, glm::mat4 viewMatrix, glm::mat4 pr
 	drawTerrain(GameObjects.terrain, viewMatrix, projectionMatrix);
 	drawPlayer(GameObjects.player, viewMatrix, projectionMatrix);
 	drawModel(GameObjects.foxbat, FoxBatGeometries, viewMatrix, projectionMatrix);
-	drawModel(GameObjects.f5etigerii, F5ETigerIIGeometries, viewMatrix, projectionMatrix);
 	drawModel(GameObjects.car, CarGeometries, viewMatrix, projectionMatrix);
 }
 
