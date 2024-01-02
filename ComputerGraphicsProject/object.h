@@ -20,6 +20,7 @@
 #define CAR_MODEL_NAME "data/RaceCar/RaceCar.obj"
 
 #define SKYBOX_PATH_NAME "data/skybox"
+#define EXPLOSION_TEXTURE_NAME "data/explode.png";
 
 /**
  * \brief Shader program related stuff (id, locations, ...).
@@ -56,6 +57,11 @@ typedef struct _ShaderProgram {
 		GLint NormalMatrix;
 
 		GLint fogOn;
+
+		GLint turnSunOn;
+		GLint useSpotLight;
+		GLint spotLightPosition;
+		GLint spotLightDirection;
 	} locations;
 
 
@@ -76,6 +82,12 @@ typedef struct _ShaderProgram {
 		locations.ViewMatrix = -1;
 		locations.ModelMatrix = -1;
 		locations.NormalMatrix = -1;
+
+		locations.fogOn = -1;
+
+		locations.useSpotLight = -1;
+		locations.spotLightPosition = -1;
+		locations.spotLightDirection = -1;
 	}
 
 } ShaderProgram;
@@ -96,6 +108,31 @@ typedef struct _SkyboxShaderProgram {
 		locations.skyboxSampler = -1;
 	}
 } SkyboxShaderProgram;
+
+typedef struct _ExplosionShaderProgram {
+	GLuint program;
+	bool initialized;
+
+	struct locations {
+		GLint position;
+		GLint PVM;
+		GLint ViewMatrix;
+		GLint time;
+		GLint texCoord;
+		GLint texSampler;
+		GLint frameDuration;
+	} locations;
+
+	_ExplosionShaderProgram() : program(0), initialized(false) {
+		locations.position = -1;
+		locations.PVM = -1;
+		locations.ViewMatrix = -1;
+		locations.time = -1;
+		locations.texCoord = -1;
+		locations.texSampler = -1;
+		locations.frameDuration = -1;
+	}
+} ExplosionShaderProgram;
 
 
 /**
@@ -122,7 +159,6 @@ typedef struct _ObjectGeometry {
 
 
 struct Mesh {
-
 	GLuint VBO;
 	GLuint EBO;
 	GLuint VAO;
@@ -161,7 +197,6 @@ typedef struct _Terrain : public Object {
 
 typedef struct _Player : public Object {
 	float viewAngle; // in degrees
-
 } Player;
 
 typedef struct _Foxbat : public Object {
@@ -173,6 +208,11 @@ typedef struct _Foxbat : public Object {
 typedef struct _F5ETigerII : public Object {
 
 } F5ETigerII;
+
+typedef struct _ExplosionObject : public Object {
+	int    textureFrames;
+	float  frameDuration;
+} ExplosionObject;
 
 
 

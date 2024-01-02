@@ -10,9 +10,26 @@ struct _GameState {
 	float elapsedTime; // in seconds
 	bool keyMap[KEYS_COUNT]; 
 	bool fogOn; // false
+	bool turnSunOn; // true
+	bool useSpotLight; // false
 
 	int windowWidth; // 800 (currently not used)
 	int windowHeight; // 800 (currently not used)
+
+	_GameState() : 
+		wireframeMode(false), 
+		fpsCameraMode(false), 
+		sceneCamera(false), 
+		cameraElevationAngle(0.0f), 
+		elapsedTime(0.0f), 
+		fogOn(false),
+		turnSunOn(true),
+		useSpotLight(false), 
+		windowWidth(WINDOW_WIDTH), 
+		windowHeight(WINDOW_HEIGHT) {
+		for (int i = 0; i < KEYS_COUNT; i++)
+			keyMap[i] = false;
+	}
 } GameState;
 
 // -----------------------  Application ---------------------------------
@@ -153,10 +170,6 @@ void cleanUpObjects() {
  * \brief Draw all scene objects.
  */
 void drawScene() {
-	glUseProgram(commonShaderProgram.program);
-	glUniform1i(commonShaderProgram.locations.fogOn, GameState.fogOn);
-	glUseProgram(0);
-
 	// setup parallel projection
 	glm::mat4 orthoProjectionMatrix = glm::ortho(
 		-SCENE_WIDTH, SCENE_WIDTH,
@@ -173,13 +186,15 @@ void drawScene() {
 	glm::mat4 viewMatrix = orthoViewMatrix;
 	glm::mat4 projectionMatrix = orthoProjectionMatrix;
 
+	// defining spotlight direction (default is the player direction) 
+	glm::vec3 spotlightDirection = GameObjects.player->direction;
 	if (GameState.fpsCameraMode) {
 		glm::vec3 cameraUpVector = glm::vec3(0.0f, 0.0f, 1.0f);
 
 		glm::vec3 cameraPosition = GameObjects.player->position;
-		glm::vec3 cameraDirection = GameObjects.player->direction;
-		glm::vec3 cameraCenter = cameraPosition + cameraDirection * std::cos(glm::radians(-GameState.cameraElevationAngle))
+		glm::vec3 cameraDirection = GameObjects.player->direction * std::cos(glm::radians(-GameState.cameraElevationAngle))
 			+ std::sin(glm::radians(-GameState.cameraElevationAngle)) * glm::vec3(0.0f, 0.0f, 1.0f);
+		glm::vec3 cameraCenter = cameraPosition + cameraDirection;
 
 		viewMatrix = glm::lookAt(
 			cameraPosition,
@@ -188,6 +203,8 @@ void drawScene() {
 		);
 
 		projectionMatrix = glm::perspective(glm::radians(70.0f), GameState.windowWidth / (float)GameState.windowHeight, 0.1f, 10.0f);
+		// if the camera is in fps mode the spotlight direction is the camera direction
+		spotlightDirection = cameraDirection;
 	}
 	else if (GameState.sceneCamera) {
 		glm::vec3 cameraUpVector = glm::vec3(0.0f, 0.0f, 1.0f);
@@ -208,6 +225,11 @@ void drawScene() {
 
 	glUseProgram(commonShaderProgram.program);
 	glUniform1f(commonShaderProgram.locations.time, GameState.elapsedTime);
+	glUniform1i(commonShaderProgram.locations.fogOn, GameState.fogOn);
+	glUniform1i(commonShaderProgram.locations.turnSunOn, GameState.turnSunOn);
+	glUniform1i(commonShaderProgram.locations.useSpotLight, GameState.useSpotLight);
+	glUniform3fv(commonShaderProgram.locations.spotLightPosition, 1, glm::value_ptr(GameObjects.player->position));
+	glUniform3fv(commonShaderProgram.locations.spotLightDirection, 1, glm::value_ptr(spotlightDirection));
 	glUseProgram(0);
 
 	// draw the scene objects
@@ -254,7 +276,50 @@ void updateObjects(float elapsedTime) {
 		GameObjects.foxbat->direction = glm::normalize(evaluateClosedCurve_1stDerivative(curveData, curveSize, curveParamT));
 	}
 
-	
+	// Update Explosion frame (ietrate through the list of frames)
+	std::list<void*>::iterator it = GameObjects.explosions.begin();
+	while (it != GameObjects.explosions.end()) {
+		ExplosionObject* explosion = (ExplosionObject*)(*it);
+
+		// update explosion
+		explosion->currentTime = elapsedTime;
+
+		if (explosion->currentTime > explosion->startTime + explosion->textureFrames * explosion->frameDuration) {
+			explosion->destroyed = true;
+		}
+		if (explosion->destroyed == true) {
+			it = GameObjects.explosions.erase(it);
+		}
+		else {
+			++it;
+		}
+	}
+
+}
+
+/*
+* \brief Add a new explosion in the GameObjects.explosions list
+* \param glm::vec3 position
+*/
+void addExplosion(const glm::vec3& position) {
+
+	ExplosionObject* newExplosion = new ExplosionObject;
+
+	newExplosion->speed = 0.0f;
+	newExplosion->destroyed = false;
+
+	newExplosion->startTime = GameState.elapsedTime;
+	newExplosion->currentTime = newExplosion->startTime;
+
+	newExplosion->size = 0.1f;
+	newExplosion->direction = glm::vec3(0.0f, 0.0f, 1.0f);
+
+	newExplosion->frameDuration = 0.1f;
+	newExplosion->textureFrames = 16;
+
+	newExplosion->position = position;
+
+	GameObjects.explosions.push_back(newExplosion);
 }
 
 // -----------------------  Window callbacks ---------------------------------
@@ -344,16 +409,35 @@ void keyboardCb(unsigned char keyPressed, int mouseX, int mouseY) {
 			// print fog on or fog off
 			GameState.fogOn ? printf("Fog On\n") : printf("Fog Off\n");
 			break;
+		case 'y':
+			GameState.turnSunOn = !GameState.turnSunOn;
+			// print sun on or sun off
+			GameState.turnSunOn ? printf("Sun On\n") : printf("Sun Off\n");
+			break;
+		case 'u':
+			GameState.useSpotLight = !GameState.useSpotLight;
+			// print spot light on or spot light off
+			GameState.useSpotLight ? printf("Spot light On\n") : printf("Spot light Off\n");
+			break;
 		case 'm':
 			GameObjects.foxbat->isMoving = !GameObjects.foxbat->isMoving;
 			GameObjects.foxbat->isMoving ? printf("Foxbat moving\n") : printf("Foxbat stopped\n");
 			break;
-		case ' ':
+		case 'e':
+			if (!GameObjects.car->destroyed) {
+				addExplosion(GameObjects.car->position);
+				GameObjects.car->destroyed = true;
+				printf("Car destroyed\n");
+			}
+			break;
+
+		// Disbaled because buggy
+		/*case ' ':
 			GameState.keyMap[KEY_SPACE] = true;
 			break;
 		case 'b':
 			GameState.keyMap[KEY_B] = true;
-			break;
+			break;*/
 	default:
 		break;
 	}

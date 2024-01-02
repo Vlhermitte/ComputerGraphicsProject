@@ -15,7 +15,7 @@
 #define FOXBAT_SIZE   0.1f
 #define CAR_SIZE   0.1f
 
-#define CAMERA_ELEVATION_MAX 70.0f
+#define CAMERA_ELEVATION_MAX 50.0f
 
 #define PLAYER_SPEED_INCREMENT 0.2f
 #define PLAYER_UP_SPEED_INCREMENT 0.1f
@@ -25,7 +25,6 @@
 
 #define MAX_HEIGHT 0.15f
 #define MIN_HEIGHT -0.15f
-
 
 enum { 
 	KEY_LEFT_ARROW, 
@@ -39,10 +38,8 @@ enum {
 };
 
 
-const float floorH = 0.25f;
-
 // FIX THIS - normals are not correct
-const float floorVertices[] = {
+const float cubeVertices[] = {
 	// position (x,y,z)   color (r,g,b)      normals (x,y,z)
 	// x     y      z     r     g     b     nx    ny    nz
 	// Front face
@@ -58,7 +55,7 @@ const float floorVertices[] = {
 	-0.5f,  0.5f, -0.5f,
 };
 
-const unsigned int floorIndices[] = {
+const unsigned int cubeIndices[] = {
 	// Front face
 	0, 1, 2,
 	2, 3, 0,
@@ -82,6 +79,15 @@ const unsigned int floorIndices[] = {
 	// Bottom face
 	0, 1, 5,
 	5, 4, 0,
+};
+
+const int explosionNumQuadVertices = 4;
+const float explosionVertexData[explosionNumQuadVertices * 5] = {
+  // x      y     z     u     v
+  -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+   1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+  -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+   1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
 };
 
 #endif // __DATA_H

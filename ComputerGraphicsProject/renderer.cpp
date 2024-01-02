@@ -5,11 +5,13 @@
 ObjectGeometry* TerrainGeometry = NULL;
 ObjectGeometry* PlayerGeometry = NULL;
 ObjectGeometry* SkyboxGeometry = NULL;
+ObjectGeometry* ExplosionGeometry = NULL;
 std::vector<ObjectGeometry*> FoxBatGeometries;
 std::vector<ObjectGeometry*> CarGeometries;
 
 ShaderProgram commonShaderProgram;
 SkyboxShaderProgram skyboxShaderProgram;
+ExplosionShaderProgram explosionShaderProgram;
 
 GameObjectsList GameObjects;
 
@@ -23,11 +25,6 @@ bool useLighting = false;
 void loadShaderPrograms() {
 
 	std::vector<GLuint> shaderList;
-
-	/*GLuint shaders[] = {
-	  pgr::createShaderFromFile(GL_VERTEX_SHADER, "vertexShader.vert"),
-	  pgr::createShaderFromFile(GL_FRAGMENT_SHADER, "fragementShader.frag"),
-	};*/
 
 	shaderList.push_back(pgr::createShaderFromFile(GL_VERTEX_SHADER, "vertexShader.vert"));
 	shaderList.push_back(pgr::createShaderFromFile(GL_FRAGMENT_SHADER, "fragementShader.frag"));
@@ -53,6 +50,12 @@ void loadShaderPrograms() {
 	commonShaderProgram.locations.time = glGetUniformLocation(commonShaderProgram.program, "time");
 	commonShaderProgram.locations.fogOn = glGetUniformLocation(commonShaderProgram.program, "fogOn");
 
+	// Lights
+	commonShaderProgram.locations.turnSunOn = glGetUniformLocation(commonShaderProgram.program, "turnSunOn");
+	commonShaderProgram.locations.useSpotLight = glGetUniformLocation(commonShaderProgram.program, "useSpotLight");
+	commonShaderProgram.locations.spotLightPosition = glGetUniformLocation(commonShaderProgram.program, "spotLightPosition");
+	commonShaderProgram.locations.spotLightDirection = glGetUniformLocation(commonShaderProgram.program, "spotLightDirection");
+
 
 	// Testing if all attributes are found
 	assert(commonShaderProgram.locations.position != -1);
@@ -74,6 +77,10 @@ void loadShaderPrograms() {
 	
 	WARN_IF(commonShaderProgram.locations.time == -1, "commonShaderProgram.locations.time == -1");
 	WARN_IF(commonShaderProgram.locations.fogOn == -1, "commonShaderProgram.locations.fogOn == -1");
+	WARN_IF(commonShaderProgram.locations.turnSunOn == -1, "commonShaderProgram.locations.turnSunOn == -1");
+	WARN_IF(commonShaderProgram.locations.useSpotLight == -1, "commonShaderProgram.locations.useSpotLight == -1");
+	WARN_IF(commonShaderProgram.locations.spotLightPosition == -1, "commonShaderProgram.locations.spotLightPosition == -1");
+	WARN_IF(commonShaderProgram.locations.spotLightDirection == -1, "commonShaderProgram.locations.spotLightDirection == -1");
 
 	commonShaderProgram.initialized = true;
 	shaderList.clear();
@@ -98,6 +105,33 @@ void loadShaderPrograms() {
 
 	skyboxShaderProgram.initialized = true;
 	shaderList.clear();
+
+	// Explosion Shaders
+
+	shaderList.push_back(pgr::createShaderFromFile(GL_VERTEX_SHADER, "explosionVertexShader.vert"));
+	shaderList.push_back(pgr::createShaderFromFile(GL_FRAGMENT_SHADER, "explosionFragmentShader.frag"));
+
+	explosionShaderProgram.program = pgr::createProgram(shaderList);
+
+	explosionShaderProgram.locations.time = glGetUniformLocation(explosionShaderProgram.program, "time");
+	explosionShaderProgram.locations.frameDuration = glGetUniformLocation(explosionShaderProgram.program, "frameDuration");
+	explosionShaderProgram.locations.texSampler = glGetUniformLocation(explosionShaderProgram.program, "texSampler");
+	explosionShaderProgram.locations.PVM = glGetUniformLocation(explosionShaderProgram.program, "PVM");
+	explosionShaderProgram.locations.ViewMatrix = glGetUniformLocation(explosionShaderProgram.program, "ViewMatrix");
+	explosionShaderProgram.locations.position = glGetAttribLocation(explosionShaderProgram.program, "position");
+	explosionShaderProgram.locations.texCoord = glGetAttribLocation(explosionShaderProgram.program, "texCoord");
+
+	// assertions (Here using MACRO WARN_IF because the skybox is not essential for the game to work properly)
+	WARN_IF(explosionShaderProgram.locations.time == -1, "explosionShaderProgram.locations.time == -1");
+	WARN_IF(explosionShaderProgram.locations.frameDuration == -1, "explosionShaderProgram.locations.frameDuration == -1");
+	WARN_IF(explosionShaderProgram.locations.texSampler == -1, "explosionShaderProgram.locations.texSampler == -1");
+	WARN_IF(explosionShaderProgram.locations.PVM == -1, "explosionShaderProgram.locations.PVM == -1");
+	WARN_IF(explosionShaderProgram.locations.ViewMatrix == -1, "explosionShaderProgram.locations.ViewMatrix == -1");
+	WARN_IF(explosionShaderProgram.locations.position == -1, "explosionShaderProgram.locations.position == -1");
+	WARN_IF(explosionShaderProgram.locations.texCoord == -1, "explosionShaderProgram.locations.texCoord == -1");
+
+	explosionShaderProgram.initialized = true;
+	shaderList.clear();
 }
 
 /**
@@ -106,6 +140,8 @@ void loadShaderPrograms() {
 void cleanupShaderPrograms(void) {
 
 	pgr::deleteProgramAndShaders(commonShaderProgram.program);
+	pgr::deleteProgramAndShaders(skyboxShaderProgram.program);
+	pgr::deleteProgramAndShaders(explosionShaderProgram.program);
 }
 
 
@@ -191,6 +227,32 @@ void initSkybox() {
 	CHECK_GL_ERROR();
 }
 
+void initExplosion(ObjectGeometry ** geometry) {
+	*geometry = new ObjectGeometry();
+
+	std::string textureName = EXPLOSION_TEXTURE_NAME;
+	(*geometry)->material.texture = pgr::createTexture(textureName);
+
+	glGenVertexArrays(1, &((*geometry)->vertexArrayObject));
+	glBindVertexArray((*geometry)->vertexArrayObject);
+
+	glGenBuffers(1, &((*geometry)->vertexBufferObject));
+	glBindBuffer(GL_ARRAY_BUFFER, (*geometry)->vertexBufferObject);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(explosionVertexData), explosionVertexData, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(explosionShaderProgram.locations.position);
+	// vertices of triangles - start at the beginning of the array (interlaced array)
+	glVertexAttribPointer(explosionShaderProgram.locations.position, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 0);
+
+	glEnableVertexAttribArray(explosionShaderProgram.locations.texCoord);
+	// texture coordinates are placed just after the position of each vertex (interlaced array)
+	glVertexAttribPointer(explosionShaderProgram.locations.texCoord, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+
+	glBindVertexArray(0);
+
+	(*geometry)->numTriangles = explosionNumQuadVertices;
+}
+
 void initModel(const std::string ModelName, std::vector<ObjectGeometry*> *ModelGeometries) {
 	if (loadMeshes(ModelName, commonShaderProgram, *ModelGeometries) != true) {
 		std::cerr << "\033[31minitModel : Cannot load : " << ModelName << "\033[0m" << std::endl;
@@ -202,6 +264,7 @@ void initSceneObjects() {
 	initTerrain();
 	initPlayer();
 	initSkybox();
+	initExplosion(&ExplosionGeometry);
 	initModel(FOXBAT_MODEL_NAME, &FoxBatGeometries);
 	initModel(CAR_MODEL_NAME, &CarGeometries);
 }
@@ -345,11 +408,48 @@ void drawModel(Object* Model, std::vector<ObjectGeometry*> ModelGeometry, const 
 	}
 }
 
+void drawExplosion(ExplosionObject* explosion, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
+
+	// enable blending and set proper blending function  
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ONE);
+
+	glUseProgram(explosionShaderProgram.program);
+
+	glm::mat4 viewTranslateMatrix = viewMatrix * glm::translate(glm::mat4(1.0f), explosion->position);
+	glm::mat4 viewTranslateRotateMatrix = viewTranslateMatrix * glm::mat4(glm::inverse(glm::mat3(viewMatrix)));
+	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(explosion->size));
+	glm::mat4 PVMmatrix = projectionMatrix * viewTranslateRotateMatrix * scaleMatrix;
+
+	//glUniformMatrix4fv(explosionShaderProgram.locations.ViewMatrix, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f))); // viewMatrix = identity matrix
+
+	glUniformMatrix4fv(explosionShaderProgram.locations.PVM, 1, GL_FALSE, glm::value_ptr(PVMmatrix));  // model-view-projection
+	glUniform1f(explosionShaderProgram.locations.time, explosion->currentTime - explosion->startTime);
+	glUniform1i(explosionShaderProgram.locations.texSampler, 0);
+	glUniform1f(explosionShaderProgram.locations.frameDuration, explosion->frameDuration);
+
+	glBindVertexArray(ExplosionGeometry->vertexArrayObject);
+	glBindTexture(GL_TEXTURE_2D, ExplosionGeometry->material.texture);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, ExplosionGeometry->numTriangles);
+
+	glBindVertexArray(0);
+	glUseProgram(0);
+
+	glDisable(GL_BLEND);
+}
+
 void drawObjects(GameObjectsList GameObjects, glm::mat4 viewMatrix, glm::mat4 projectionMatrix) {
 	drawTerrain(GameObjects.terrain, viewMatrix, projectionMatrix);
 	drawPlayer(GameObjects.player, viewMatrix, projectionMatrix);
 	drawModel(GameObjects.foxbat, FoxBatGeometries, viewMatrix, projectionMatrix);
 	drawModel(GameObjects.car, CarGeometries, viewMatrix, projectionMatrix);
+
+	glDisable(GL_DEPTH_TEST);
+	for (std::list<void*>::iterator it = GameObjects.explosions.begin(); it != GameObjects.explosions.end(); ++it) {
+		ExplosionObject* explosion = (ExplosionObject*)(*it);
+		drawExplosion(explosion, viewMatrix, projectionMatrix);
+	}
+	glEnable(GL_DEPTH_TEST);
 }
 
 

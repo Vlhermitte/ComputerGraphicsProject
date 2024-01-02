@@ -34,6 +34,11 @@ uniform mat4 NormalMatrix;
 
 uniform Material material;  // current material
 
+uniform bool turnSunOn;
+uniform bool useSpotLight;
+uniform vec3 spotLightPosition;
+uniform vec3 spotLightDirection;
+
 uniform float time;         // time used for simulation of moving lights (such as sun)
 
 // Outgoing attributes to Fragment shader
@@ -52,14 +57,16 @@ void SetupLight() {
 	sun.ambient  = vec3(0.2f, 0.2f, 0.2f);
 	sun.diffuse  = vec3(0.8f, 0.8f, 0.8f);
 	sun.specular = vec3(1.0f, 1.0f, 1.0f);
-
-	playerLight.ambient       = vec3(0.2f);
-	playerLight.diffuse       = vec3(1.0);
-	playerLight.specular      = vec3(1.0);
-	playerLight.spotCosCutOff = 0.95f;
-	playerLight.spotExponent  = 0.0;
-
 	sun.position = (ViewMatrix * vec4(cos(time * sunSpeed), 0.0f, sin(time * sunSpeed), 0.0f)).xyz;
+	sun.spotDirection = normalize((ViewMatrix * vec4(spotLightDirection, 0.0)).xyz);
+
+	playerLight.ambient = vec3(0.2f);
+	playerLight.diffuse = vec3(1.0);
+	playerLight.specular = vec3(1.0);
+	playerLight.spotCosCutOff = 0.95f;
+	playerLight.spotExponent = 0.0;
+	playerLight.position = (ViewMatrix * vec4(spotLightPosition, 1.0)).xyz;
+	playerLight.spotDirection = normalize((ViewMatrix * vec4(spotLightDirection, 0.0)).xyz);
 }
 
 vec4 directionalLight(Light light, Material material, vec3 vertexPosition, vec3 vertexNormal) {
@@ -80,11 +87,27 @@ vec4 directionalLight(Light light, Material material, vec3 vertexPosition, vec3 
   return vec4(ret, 1.0);
 }
 
-vec4 spotLight(Light light, Material material, vec3 vertexPosition, vec3 vertexNormal) {
+vec4 spotLight(Light spotLight, Material material, vec3 vertexPosition, vec3 vertexNormal) {
 
 	vec3 ret = vec3(0.0);
 
-	// TODO: Implement spot light
+	vec3 L = normalize(spotLight.position - vertexPosition);
+	vec3 R = reflect(-L, vertexNormal);
+	vec3 V = normalize(-vertexPosition);
+	float NdotL = max(0.0, dot(vertexNormal, L));
+	float RdotV = max(0.0, dot(R, V));
+	float spotCoef = max(0.0, dot(-L, spotLight.spotDirection));
+
+	ret += material.ambient * spotLight.ambient;
+	ret += material.diffuse * spotLight.diffuse * NdotL;
+	ret += material.specular * spotLight.specular * pow(RdotV, material.shininess);
+
+	if (spotCoef >= spotLight.spotCosCutOff) {
+		ret *= pow(spotCoef, spotLight.spotExponent);
+	} else {
+		ret = vec3(0.0);
+	}
+
 	return vec4(ret, 1.0);
 }
 
@@ -103,8 +126,10 @@ void main() {
 	vec4 outputColor = vec4(material.ambient * globalAmbientLight, 0.0);
 
 	// accumulate contributions from all lights
-	outputColor += directionalLight(sun, material, vertexPosition, vertexNormal);
-	// outputColor += spotLight(playerLight, material, vertexPosition, vertexNormal);
+	if (turnSunOn)
+		outputColor += directionalLight(sun, material, vertexPosition, vertexNormal);
+	if (useSpotLight)
+		outputColor += spotLight(playerLight, material, vertexPosition, vertexNormal);
 
 	// For fog
 	vec4 positionRelativeToCamera = ViewMatrix * ModelMatrix * vec4(position, 1.0);

@@ -4,6 +4,7 @@
 #define __RENDERER_H
 
 #include <vector>
+#include <list>
 #include "data.h"
 #include "object.h"
 #include "spline.h"
@@ -16,6 +17,7 @@ typedef struct _GameObjects {
 	Player* player;
 	Terrain* terrain;
 	Foxbat* foxbat;
+	std::list<void*> explosions;
 	F5ETigerII* f5etigerii;
 	Object* car;
 } GameObjectsList;
