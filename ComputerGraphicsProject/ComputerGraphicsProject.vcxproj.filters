@@ -64,6 +64,5 @@
     <None Include="explosionFragmentShader.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="README.md" />
   </ItemGroup>
 </Project>

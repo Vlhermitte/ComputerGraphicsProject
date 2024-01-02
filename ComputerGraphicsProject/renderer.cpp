@@ -8,6 +8,8 @@ ObjectGeometry* SkyboxGeometry = NULL;
 ObjectGeometry* ExplosionGeometry = NULL;
 std::vector<ObjectGeometry*> FoxBatGeometries;
 std::vector<ObjectGeometry*> CarGeometries;
+std::vector <ObjectGeometry*> Tree1Geometries;
+std::vector <ObjectGeometry*> Tree2Geometries;
 
 ShaderProgram commonShaderProgram;
 SkyboxShaderProgram skyboxShaderProgram;
@@ -267,6 +269,28 @@ void initSceneObjects() {
 	initExplosion(&ExplosionGeometry);
 	initModel(FOXBAT_MODEL_NAME, &FoxBatGeometries);
 	initModel(CAR_MODEL_NAME, &CarGeometries);
+	initModel(TREE1_MODEL_NAME, &Tree1Geometries);
+	initModel(TREE2_MODEL_NAME, &Tree2Geometries);
+}
+
+
+// -----------------------  Bounds Detection ---------------------------------
+
+glm::vec3 checkBounds(const glm::vec3& position, float objectSize) {
+	glm::vec3 newPosition = position;
+	if (position.x > TERRAIN_SIZE - objectSize) {
+		newPosition.x = TERRAIN_SIZE - objectSize;
+	}
+	else if (position.x < -TERRAIN_SIZE + objectSize) {
+		newPosition.x = -TERRAIN_SIZE + objectSize;
+	}
+	if (position.y > TERRAIN_SIZE - objectSize) {
+		newPosition.y = TERRAIN_SIZE - objectSize;
+	}
+	else if (position.y < -TERRAIN_SIZE + objectSize) {
+		newPosition.y = -TERRAIN_SIZE + objectSize;
+	}
+	return newPosition;
 }
 
 // -----------------------  Drawing ---------------------------------
@@ -441,8 +465,19 @@ void drawExplosion(ExplosionObject* explosion, const glm::mat4& viewMatrix, cons
 void drawObjects(GameObjectsList GameObjects, glm::mat4 viewMatrix, glm::mat4 projectionMatrix) {
 	drawTerrain(GameObjects.terrain, viewMatrix, projectionMatrix);
 	drawPlayer(GameObjects.player, viewMatrix, projectionMatrix);
+
+	// Interactions with the foxbat
+	glEnable(GL_STENCIL_TEST);
+	CHECK_GL_ERROR();
 	drawModel(GameObjects.foxbat, FoxBatGeometries, viewMatrix, projectionMatrix);
+	glStencilFunc(GL_ALWAYS, 1, 0xFF);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+	glDisable(GL_STENCIL_TEST);
+
 	drawModel(GameObjects.car, CarGeometries, viewMatrix, projectionMatrix);
+	drawModel(GameObjects.tree1, Tree1Geometries, viewMatrix, projectionMatrix);
+	drawModel(GameObjects.tree2, Tree2Geometries, viewMatrix, projectionMatrix);
+
 
 	glDisable(GL_DEPTH_TEST);
 	for (std::list<void*>::iterator it = GameObjects.explosions.begin(); it != GameObjects.explosions.end(); ++it) {
@@ -552,7 +587,6 @@ bool loadMeshes(const std::string& fileName, ShaderProgram& shader, std::vector<
 		// diffiuse
 		if ((retValue = aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &color)) != AI_SUCCESS)
 			color = aiColor4D(0.0f, 0.0f, 0.0f, 0.0f);
-
 		geometry->material.diffuse = glm::vec3(color.r, color.g, color.b);
 
 		// ambient

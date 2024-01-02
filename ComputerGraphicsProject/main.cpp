@@ -123,6 +123,14 @@ void reinisialiseObjects() {
 		GameObjects.car = new Object();
 		GameObjects.car->isInitialized = true;
 	}
+	if (GameObjects.tree1 == NULL) {
+		GameObjects.tree1 = new Object();
+		GameObjects.tree1->isInitialized = true;
+	}
+	if (GameObjects.tree2 == NULL) {
+		GameObjects.tree2 = new Object();
+		GameObjects.tree2->isInitialized = true;
+	}
 
 	// Reinitialization Player
 	GameObjects.player->position = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -150,6 +158,20 @@ void reinisialiseObjects() {
 	GameObjects.car->size = CAR_SIZE;
 	GameObjects.car->destroyed = false;
 
+	// Reinitialization Tree1 object
+	GameObjects.tree1->position = glm::vec3(-0.7f, -0.6f, -0.15f);
+	GameObjects.tree1->direction = glm::vec3(0.1f, 0.1f, 0.0f);
+	GameObjects.tree1->speed = 0.0f;
+	GameObjects.tree1->size = TREE_SIZE;
+	GameObjects.tree1->destroyed = false;
+
+	// Reinitialization Tree2 object
+	GameObjects.tree2->position = glm::vec3(0.6f, 0.3f, -0.15f);
+	GameObjects.tree2->direction = glm::vec3(0.1f, 0.1f, 0.0f);
+	GameObjects.tree2->speed = 0.0f;
+	GameObjects.tree2->size = TREE_SIZE;
+	GameObjects.tree2->destroyed = false;
+
 	// Setting up the terrain with position (0,0,MIN_HEIGHT) (xyz)
 	GameObjects.terrain->position = glm::vec3(0.0f, 0.0f, MIN_HEIGHT);
 	GameObjects.terrain->size = TERRAIN_SIZE;
@@ -161,6 +183,41 @@ void reinisialiseObjects() {
 void cleanUpObjects() {
 	// delete all non essential objects (i.e not the player and the terrain)
 	// TODO : Delete objects when we have impl
+}
+
+// -----------------------  Colision Detection ---------------------------------
+
+bool detectColision(const glm::vec3& point, const glm::vec3& center, float radius) {
+	// Using sphere colision detection
+	float distance = glm::distance(point, center);
+	return distance < radius;
+}
+
+
+void checkCollisions() {
+	// check colision between player and foxbat
+	if (!GameObjects.foxbat->destroyed && detectColision(GameObjects.player->position, GameObjects.foxbat->position, GameObjects.foxbat->size)) {
+		// add explosion
+		addExplosion(GameObjects.foxbat->position);
+		// destroy foxbat
+		GameObjects.foxbat->destroyed = true;
+	}
+
+	// check colision between player and tree1
+	if (!GameObjects.tree1->destroyed && detectColision(GameObjects.player->position, GameObjects.tree1->position, GameObjects.tree1->size)) {
+		// add explosion
+		addExplosion(GameObjects.tree1->position);
+		// destroy tree1
+		GameObjects.tree1->destroyed = true;
+	}
+
+	// check colision between player and tree2
+	if (!GameObjects.tree2->destroyed && detectColision(GameObjects.player->position, GameObjects.tree2->position, GameObjects.tree2->size)) {
+		// add explosion
+		addExplosion(GameObjects.tree2->position);
+		// destroy tree2
+		GameObjects.tree2->destroyed = true;
+	}
 }
 
 
@@ -240,7 +297,6 @@ void drawScene() {
 		drawSkybox(viewMatrix, projectionMatrix);
 }
 
-
 /**
  * \brief Draw the player.
  * \param player Player object.
@@ -250,22 +306,19 @@ void drawScene() {
 void updateObjects(float elapsedTime) {
 	// update the scene objects
 	float timeDelta = elapsedTime - GameObjects.player->currentTime;
+
+	// Check colisions 
+	checkCollisions();
 	
 	// Update Player
-	GameObjects.player->currentTime = elapsedTime;
 	GameObjects.player->position += GameObjects.player->direction * GameObjects.player->speed * 0.01f;
-
-	// TODO FIX THIS
-	if (GameState.keyMap[KEY_SPACE] && GameObjects.player->position.z < MAX_HEIGHT)
-		GameObjects.player->position.z += GameObjects.player->verticalSpeed * 0.01f;
-	else if(GameState.keyMap[KEY_SPACE])
-		GameObjects.player->position.z = MAX_HEIGHT;
-
-	if (GameState.keyMap[KEY_B] && GameObjects.player->position.z > MIN_HEIGHT)
-		GameObjects.player->position.z -= GameObjects.player->verticalSpeed * 0.01f;
-	else if (GameState.keyMap[KEY_B])
-		GameObjects.player->position.z = MIN_HEIGHT;
-
+	// We clamp the player position to the scene size 
+	// Not using the checkBounds() because we don't want to teleport the player to the other side of the scene
+	GameObjects.player->position = glm::clamp(
+		GameObjects.player->position, 
+		glm::vec3(-SCENE_WIDTH + GameObjects.player->size, -SCENE_HEIGHT + GameObjects.player->size, MIN_HEIGHT), 
+		glm::vec3(SCENE_WIDTH - GameObjects.player->size, SCENE_HEIGHT - GameObjects.player->size, MAX_HEIGHT)
+	);
 
 	// Update Foxbat (airplane)
 	if (GameObjects.foxbat->isMoving) {
@@ -273,6 +326,7 @@ void updateObjects(float elapsedTime) {
 		float curveParamT = GameObjects.foxbat->speed * (GameObjects.foxbat->currentTime - GameObjects.foxbat->startTime);
 		glm::vec3 closedCurve = evaluateClosedCurve(curveData, curveSize, curveParamT);
 		GameObjects.foxbat->position = GameObjects.foxbat->initPosition + closedCurve;
+		GameObjects.foxbat->position = checkBounds(GameObjects.foxbat->position, GameObjects.foxbat->size);
 		GameObjects.foxbat->direction = glm::normalize(evaluateClosedCurve_1stDerivative(curveData, curveSize, curveParamT));
 	}
 

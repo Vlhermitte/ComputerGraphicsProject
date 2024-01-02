@@ -18,8 +18,9 @@ typedef struct _GameObjects {
 	Terrain* terrain;
 	Foxbat* foxbat;
 	std::list<void*> explosions;
-	F5ETigerII* f5etigerii;
 	Object* car;
+	Object* tree1;
+	Object* tree2;
 } GameObjectsList;
 
 extern GameObjectsList GameObjects;
@@ -36,6 +37,9 @@ void initSkybox();
 void initModel(const std::string ModelName, std::vector<ObjectGeometry*> ModelGeometries);
 
 void initSceneObjects();
+
+// -----------------------  Colision Detection -------------------------------
+glm::vec3 checkBounds(const glm::vec3& position, float objectSize);
 
 // -----------------------  Draw scene objects ---------------------------------
 

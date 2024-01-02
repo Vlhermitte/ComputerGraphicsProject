@@ -18,6 +18,8 @@
 #define FOXBAT_MODEL_NAME "data/MiG25_foxbat/MiG25_foxbat.obj"
 #define F5ETIGERII_MODEL_NAME "data/F5ETigerII/F-5ETigerII.obj"
 #define CAR_MODEL_NAME "data/RaceCar/RaceCar.obj"
+#define TREE1_MODEL_NAME "data/tree1/Tree.obj"
+#define TREE2_MODEL_NAME "data/tree2/Tree2.obj"
 
 #define SKYBOX_PATH_NAME "data/skybox"
 #define EXPLOSION_TEXTURE_NAME "data/explode.png";
@@ -197,6 +199,7 @@ typedef struct _Terrain : public Object {
 
 typedef struct _Player : public Object {
 	float viewAngle; // in degrees
+	bool isAgainsAnObject; // false
 } Player;
 
 typedef struct _Foxbat : public Object {

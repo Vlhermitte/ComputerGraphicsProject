@@ -21,6 +21,9 @@ void cleanUpObjects();
 // -----------------------  Scene objects ---------------------------------
 void drawScene();
 
+// -----------------------  Explosion ---------------------------------
+void addExplosion(const glm::vec3& position);
+
 // -----------------------  Window callbacks ---------------------------------
 void displayCb();
 void reshapeCb(int width, int height);
