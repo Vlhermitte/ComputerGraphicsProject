@@ -202,6 +202,7 @@
     <None Include="explosionVertexShader.vert" />
     <None Include="explosionFragmentShader.frag" />
     <None Include="fragementShader.frag" />
+    <None Include="README.md" />
     <None Include="skyboxFragmentShader.frag" />
     <None Include="skyboxVertexShader.vert" />
     <None Include="vertexShader.vert" />
