@@ -85,19 +85,19 @@ vec4 directionalLight(Light light, Material material, vec3 vertexPosition, vec3 
 }
 
 vec4 spotLight(Light spotLight, Material material, vec3 vertexPosition, vec3 vertexNormal) {
-
 	vec3 ret = vec3(0.0);
 
-	vec3 L = normalize(spotLight.position - vertexPosition);
-	vec3 R = reflect(-L, vertexNormal);
-	vec3 V = normalize(-vertexPosition);
+	vec3 L = normalize(spotLight.position - vertexPosition); // Light direction
+	vec3 V = normalize(-vertexPosition); // View direction
+	vec3 H = normalize(L + V); // Halfway vector between light and view directions
 	float NdotL = max(0.0, dot(vertexNormal, L));
-	float RdotV = max(0.0, dot(R, V));
-	float spotCoef = max(0.0, dot(-L, spotLight.spotDirection));
+	float NdotH = max(0.0, dot(vertexNormal, H)); // Dot product of normal and halfway vector
 
 	ret += material.ambient * spotLight.ambient;
 	ret += material.diffuse * spotLight.diffuse * NdotL;
-	ret += material.specular * spotLight.specular * pow(RdotV, material.shininess);
+	ret += material.specular * spotLight.specular * pow(NdotH, material.shininess); // Blinn-Phong specular term
+
+	float spotCoef = dot(normalize(spotLight.spotDirection), -L);
 
 	if (spotCoef >= spotLight.spotCosCutOff) {
 		ret *= pow(spotCoef, spotLight.spotExponent);
