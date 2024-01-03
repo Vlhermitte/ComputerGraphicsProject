@@ -1,7 +1,6 @@
 #version 140
 
 uniform float time;           // used to select proper animation frame
-uniform mat4 ViewMatrix;      // view (camera) transform --> world to eye coordinates
 uniform sampler2D texSampler; // sampler for texture access
 
 smooth in vec3 position_v;    // camera space fragment position

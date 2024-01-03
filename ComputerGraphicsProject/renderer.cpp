@@ -28,8 +28,8 @@ void loadShaderPrograms() {
 
 	std::vector<GLuint> shaderList;
 
-	shaderList.push_back(pgr::createShaderFromFile(GL_VERTEX_SHADER, "vertexShader.vert"));
-	shaderList.push_back(pgr::createShaderFromFile(GL_FRAGMENT_SHADER, "fragementShader.frag"));
+	shaderList.push_back(pgr::createShaderFromFile(GL_VERTEX_SHADER, "lightingShaderPerFrag.vert"));
+	shaderList.push_back(pgr::createShaderFromFile(GL_FRAGMENT_SHADER, "lightingShaderPerFrag.frag"));
 
 	commonShaderProgram.program = pgr::createProgram(shaderList);
 	commonShaderProgram.locations.position = glGetAttribLocation(commonShaderProgram.program, "position");
@@ -42,7 +42,7 @@ void loadShaderPrograms() {
 	commonShaderProgram.locations.specular = glGetUniformLocation(commonShaderProgram.program, "material.specular");
 	commonShaderProgram.locations.shininess = glGetUniformLocation(commonShaderProgram.program, "material.shininess");
 	commonShaderProgram.locations.useTexture = glGetUniformLocation(commonShaderProgram.program, "material.useTexture");
-	commonShaderProgram.locations.texSampler = glGetUniformLocation(commonShaderProgram.program, "texSampler");
+	commonShaderProgram.locations.texSampler = glGetUniformLocation(commonShaderProgram.program, "fragTexSampler");
 
 	// other attributes and uniforms
 	commonShaderProgram.locations.PVM = glGetUniformLocation(commonShaderProgram.program, "PVM");
@@ -119,7 +119,6 @@ void loadShaderPrograms() {
 	explosionShaderProgram.locations.frameDuration = glGetUniformLocation(explosionShaderProgram.program, "frameDuration");
 	explosionShaderProgram.locations.texSampler = glGetUniformLocation(explosionShaderProgram.program, "texSampler");
 	explosionShaderProgram.locations.PVM = glGetUniformLocation(explosionShaderProgram.program, "PVM");
-	explosionShaderProgram.locations.ViewMatrix = glGetUniformLocation(explosionShaderProgram.program, "ViewMatrix");
 	explosionShaderProgram.locations.position = glGetAttribLocation(explosionShaderProgram.program, "position");
 	explosionShaderProgram.locations.texCoord = glGetAttribLocation(explosionShaderProgram.program, "texCoord");
 
@@ -128,7 +127,6 @@ void loadShaderPrograms() {
 	WARN_IF(explosionShaderProgram.locations.frameDuration == -1, "explosionShaderProgram.locations.frameDuration == -1");
 	WARN_IF(explosionShaderProgram.locations.texSampler == -1, "explosionShaderProgram.locations.texSampler == -1");
 	WARN_IF(explosionShaderProgram.locations.PVM == -1, "explosionShaderProgram.locations.PVM == -1");
-	WARN_IF(explosionShaderProgram.locations.ViewMatrix == -1, "explosionShaderProgram.locations.ViewMatrix == -1");
 	WARN_IF(explosionShaderProgram.locations.position == -1, "explosionShaderProgram.locations.position == -1");
 	WARN_IF(explosionShaderProgram.locations.texCoord == -1, "explosionShaderProgram.locations.texCoord == -1");
 
