@@ -16,6 +16,7 @@ extern SkyboxShaderProgram skyboxShaderProgram;
 typedef struct _GameObjects {
 	Player* player;
 	Terrain* terrain;
+	Object* cube;
 	Foxbat* foxbat;
 	std::list<void*> explosions;
 	Object* car;

@@ -11,6 +11,7 @@
 
 #define PLAYER_SIZE   0.05f
 #define TERRAIN_SIZE  1.0f
+#define CUBE_SIZE     0.1f
 #define FLOOR_SIZE	1.0f
 #define FOXBAT_SIZE   0.1f
 #define CAR_SIZE   0.1f
@@ -41,20 +42,20 @@ enum {
 
 // FIX THIS - normals are not correct
 const float cubeVertices[] = {
-	// position (x,y,z)   color (r,g,b)      normals (x,y,z)
-	// x     y      z     r     g     b     nx    ny    nz
-	// Front face
-	-0.5f, -0.5f,  0.5f, 
-	 0.5f, -0.5f,  0.5f,
-	 0.5f,  0.5f,  0.5f,
-	-0.5f,  0.5f,  0.5f,
+	// position (x,y,z)   color (r,g,b)      normals (x,y,nz)
+	// Front face (z positive)
+	-0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, 1.0f,
+	-0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, 1.0f,
 
-	// Back face
-	-0.5f, -0.5f, -0.5f,
-	 0.5f, -0.5f, -0.5f,
-	 0.5f,  0.5f, -0.5f,
-	-0.5f,  0.5f, -0.5f,
+	// Back face (z negative)
+	-0.5f, -0.5f, -0.5f, 1.0f, 0.5f, 0.0f,  0.0f, 0.0f, -1.0f,
+	 0.5f, -0.5f, -0.5f, 1.0f, 0.5f, 0.0f,  0.0f, 0.0f, -1.0f,
+	 0.5f,  0.5f, -0.5f, 1.0f, 0.5f, 0.0f,  0.0f, 0.0f, -1.0f,
+	-0.5f,  0.5f, -0.5f, 1.0f, 0.5f, 0.0f,  0.0f, 0.0f, -1.0f,
 };
+
 
 const unsigned int cubeIndices[] = {
 	// Front face

@@ -53,6 +53,7 @@ void initApplication() {
 	GameObjects.player = NULL;
 	GameObjects.foxbat = NULL;
 	GameObjects.terrain = NULL;
+	GameObjects.cube = NULL;
 	GameObjects.car = NULL;
 
 	// init your Application
@@ -115,6 +116,10 @@ void reinisialiseObjects() {
 		GameObjects.terrain = new Terrain();
 		GameObjects.terrain->isInitialized = true;
 	}
+	if (GameObjects.cube == NULL) {
+		GameObjects.cube = new Object();
+		GameObjects.cube->isInitialized = true;
+	}
 	if (GameObjects.foxbat == NULL) {
 		GameObjects.foxbat = new Foxbat();
 		GameObjects.foxbat->isInitialized = true;
@@ -141,6 +146,15 @@ void reinisialiseObjects() {
 	GameObjects.player->destroyed = false;
 	GameObjects.player->startTime = GameState.elapsedTime;
 	GameObjects.player->currentTime = GameObjects.player->startTime;
+
+	// Reinitialization Cube
+	GameObjects.cube->position = glm::vec3(-0.5f, 0.48f, 0.15f);
+	GameObjects.cube->direction = glm::vec3(0.0f, 0.0f, 0.0f);
+	GameObjects.cube->speed = 0.0f;
+	GameObjects.cube->size = CUBE_SIZE;
+	GameObjects.cube->destroyed = false;
+	GameObjects.cube->startTime = GameState.elapsedTime;
+	GameObjects.cube->currentTime = GameObjects.cube->startTime;
 
 	// Reinitialization Foxbat object
 	GameObjects.foxbat->position = glm::vec3(0.1f, 0.3f, 0.0f);
@@ -329,6 +343,16 @@ void updateObjects(float elapsedTime) {
 		GameObjects.foxbat->position = checkBounds(GameObjects.foxbat->position, GameObjects.foxbat->size);
 		GameObjects.foxbat->direction = glm::normalize(evaluateClosedCurve_1stDerivative(curveData, curveSize, curveParamT));
 	}
+
+	// Update Cube rotation
+	GameObjects.cube->currentTime = elapsedTime;
+	GameObjects.cube->direction = glm::vec3(
+		std::cos(GameObjects.cube->currentTime),
+		std::sin(GameObjects.cube->currentTime),
+		0.0f
+	);
+	// make the cube move up and down
+	GameObjects.cube->position.z = 0.2f + 0.1f * std::sin(GameObjects.cube->currentTime);
 
 	// Update Explosion frame (ietrate through the list of frames)
 	std::list<void*>::iterator it = GameObjects.explosions.begin();

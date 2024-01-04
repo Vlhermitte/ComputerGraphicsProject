@@ -6,6 +6,7 @@ ObjectGeometry* TerrainGeometry = NULL;
 ObjectGeometry* PlayerGeometry = NULL;
 ObjectGeometry* SkyboxGeometry = NULL;
 ObjectGeometry* ExplosionGeometry = NULL;
+ObjectGeometry* CubeGeometry = NULL;
 std::vector<ObjectGeometry*> FoxBatGeometries;
 std::vector<ObjectGeometry*> CarGeometries;
 std::vector <ObjectGeometry*> Tree1Geometries;
@@ -253,6 +254,50 @@ void initExplosion(ObjectGeometry ** geometry) {
 	(*geometry)->numTriangles = explosionNumQuadVertices;
 }
 
+void initCube(ObjectGeometry** geometry) {
+	*geometry = new ObjectGeometry();
+
+	// VAO
+	glGenVertexArrays(1, &((*geometry)->vertexArrayObject));
+	glBindVertexArray((*geometry)->vertexArrayObject);
+
+	// VBO
+	glGenBuffers(1, &((*geometry)->vertexBufferObject));
+	glBindBuffer(GL_ARRAY_BUFFER, (*geometry)->vertexBufferObject);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+
+	// EBO
+	glGenBuffers(1, &((*geometry)->elementBufferObject));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, (*geometry)->elementBufferObject);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeIndices), cubeIndices, GL_STATIC_DRAW);
+
+	// Position attribute
+	glEnableVertexAttribArray(commonShaderProgram.locations.position);
+	glVertexAttribPointer(commonShaderProgram.locations.position, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), 0);
+	CHECK_GL_ERROR();
+
+	// Color attribute
+	glEnableVertexAttribArray(commonShaderProgram.locations.color);
+	glVertexAttribPointer(commonShaderProgram.locations.color, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
+	CHECK_GL_ERROR();
+
+	// Normal attribute
+	glEnableVertexAttribArray(commonShaderProgram.locations.normal);
+	glVertexAttribPointer(commonShaderProgram.locations.normal, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
+	CHECK_GL_ERROR();
+
+	(*geometry)->material.ambient = glm::vec3(1.0f, 0.0f, 1.0f);
+	(*geometry)->material.diffuse = glm::vec3(1.0f, 0.0f, 1.0f);
+	(*geometry)->material.specular = glm::vec3(1.0f, 0.0f, 1.0f);
+	(*geometry)->material.shininess = 10.0f;
+	(*geometry)->material.texture = 0;
+
+	glBindVertexArray(0);
+	CHECK_GL_ERROR();
+
+	(*geometry)->numTriangles = 12;
+}
+
 void initModel(const std::string ModelName, std::vector<ObjectGeometry*> *ModelGeometries) {
 	if (loadMeshes(ModelName, commonShaderProgram, *ModelGeometries) != true) {
 		std::cerr << "\033[31minitModel : Cannot load : " << ModelName << "\033[0m" << std::endl;
@@ -265,6 +310,7 @@ void initSceneObjects() {
 	initPlayer();
 	initSkybox();
 	initExplosion(&ExplosionGeometry);
+	initCube(&CubeGeometry);
 	initModel(FOXBAT_MODEL_NAME, &FoxBatGeometries);
 	initModel(CAR_MODEL_NAME, &CarGeometries);
 	initModel(TREE1_MODEL_NAME, &Tree1Geometries);
@@ -386,6 +432,34 @@ void drawTerrain(Terrain* Terrain, const glm::mat4& viewMatrix, const glm::mat4&
 	}
 }
 
+void drawCube(Object* Cube, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
+	if (Cube->isInitialized) {
+		glUseProgram(commonShaderProgram.program);
+
+		// prepare modeling transform matrix
+		glm::mat4 modelMatrix = alignObject(Cube->position, (Cube->direction), glm::vec3(1.0f, 1.0f, 1.0f)); // make the cube rotate around its center
+		modelMatrix = glm::rotate(modelMatrix, glm::radians(90.f), glm::vec3(1, 0, 0));
+		modelMatrix = glm::scale(modelMatrix, glm::vec3(Cube->size));
+
+		// send matrices to the vertex & fragment shader
+		setTransformUniforms(modelMatrix, viewMatrix, projectionMatrix);
+		// set material uniforms
+		setMaterialUniforms(CubeGeometry->material);
+
+		// draw geometry
+		glBindVertexArray(CubeGeometry->vertexArrayObject);
+		glDrawElements(GL_TRIANGLES, CubeGeometry->numTriangles * 3, GL_UNSIGNED_INT, 0);
+		CHECK_GL_ERROR();
+
+		glBindVertexArray(0);
+		glUseProgram(0);
+	}
+	else {
+		std::cerr << "Cube not initialised" << std::endl;
+	}
+
+}
+
 void drawSkybox(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
 	glUseProgram(skyboxShaderProgram.program);
 	glm::mat4 matrix = projectionMatrix * viewMatrix;
@@ -463,6 +537,7 @@ void drawExplosion(ExplosionObject* explosion, const glm::mat4& viewMatrix, cons
 void drawObjects(GameObjectsList GameObjects, glm::mat4 viewMatrix, glm::mat4 projectionMatrix) {
 	drawTerrain(GameObjects.terrain, viewMatrix, projectionMatrix);
 	drawPlayer(GameObjects.player, viewMatrix, projectionMatrix);
+	drawCube(GameObjects.cube, viewMatrix, projectionMatrix);
 
 	// Interactions with the foxbat
 	glEnable(GL_STENCIL_TEST);
@@ -622,7 +697,6 @@ bool loadMeshes(const std::string& fileName, ShaderProgram& shader, std::vector<
 			size_t found = fileName.find_last_of("/\\");
 			// insert correct texture file path 
 			if (found != std::string::npos) { // not found
-				//subMesh_p->textureName.insert(0, "/");
 				textureName.insert(0, fileName.substr(0, found + 1));
 			}
 

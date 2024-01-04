@@ -111,7 +111,7 @@ vec4 spotLight(Light spotLight, Material material, vec3 vertexPosition, vec3 ver
 float computeVisbility(float distToCam) {
 	float fogNear = 0.0f;
 	float fogFar = 1.0f;
-	float visibility = smoothstep(fogNear, fogFar, distToCam);
+	float visibility = smoothstep(fogNear, fogFar, distToCam); // computed using Hermite interpolation
 	return visibility;
 }
 
@@ -137,7 +137,7 @@ void main() {
     if(fogOn) {
         vec4 fogcolor = vec4(0.4, 0.4, 0.4, 1);
         float distToCam = -fragPosition.z;
-        float visibility = computeVisbility(distToCam);
+        float visibility = computeVisbility(distToCam) * ((sin(time * 0.4f) + 1.0f) / 2); // Add some fog movement along a sin wave
         outputColor = mix(outputColor, fogcolor, visibility);
     }
 
