@@ -13,9 +13,10 @@
 #define TERRAIN_SIZE  1.0f
 #define CUBE_SIZE     0.1f
 #define FLOOR_SIZE	1.0f
-#define FOXBAT_SIZE   0.1f
+#define AIRCRAFT_SIZE   0.1f
 #define CAR_SIZE   0.1f
 #define TREE_SIZE   0.2f
+#define TORCH_SIZE   1.0f
 
 #define CAMERA_ELEVATION_MAX 50.0f
 
@@ -26,7 +27,7 @@
 #define PLAYER_VIEW_ANGLE_DELTA 2.0f
 
 #define MAX_HEIGHT 0.15f
-#define MIN_HEIGHT -0.15f
+#define MIN_HEIGHT -0.2f
 
 enum { 
 	KEY_LEFT_ARROW, 
@@ -44,16 +45,16 @@ enum {
 const float cubeVertices[] = {
 	// position (x,y,z)   color (r,g,b)      normals (x,y,nz)
 	// Front face (z positive)
-	-0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, 1.0f,
-	 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, 1.0f,
-	 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, 1.0f,
-	-0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, 0.5f,
+	 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, 0.5f,
+	 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, 0.5f,
+	-0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, 0.5f,
 
 	// Back face (z negative)
-	-0.5f, -0.5f, -0.5f, 1.0f, 0.5f, 0.0f,  0.0f, 0.0f, -1.0f,
-	 0.5f, -0.5f, -0.5f, 1.0f, 0.5f, 0.0f,  0.0f, 0.0f, -1.0f,
-	 0.5f,  0.5f, -0.5f, 1.0f, 0.5f, 0.0f,  0.0f, 0.0f, -1.0f,
-	-0.5f,  0.5f, -0.5f, 1.0f, 0.5f, 0.0f,  0.0f, 0.0f, -1.0f,
+	-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, -0.5f,
+	 0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, -0.5f,
+	 0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, -0.5f,
+	-0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, -0.5f,
 };
 
 

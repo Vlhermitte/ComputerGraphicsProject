@@ -9,8 +9,9 @@ ObjectGeometry* ExplosionGeometry = NULL;
 ObjectGeometry* CubeGeometry = NULL;
 std::vector<ObjectGeometry*> FoxBatGeometries;
 std::vector<ObjectGeometry*> CarGeometries;
-std::vector <ObjectGeometry*> Tree1Geometries;
-std::vector <ObjectGeometry*> Tree2Geometries;
+std::vector<ObjectGeometry*> Tree1Geometries;
+std::vector<ObjectGeometry*> Tree2Geometries;
+std::vector<ObjectGeometry*> ZepplinGeometries;
 
 ShaderProgram commonShaderProgram;
 SkyboxShaderProgram skyboxShaderProgram;
@@ -295,7 +296,7 @@ void initCube(ObjectGeometry** geometry) {
 	glBindVertexArray(0);
 	CHECK_GL_ERROR();
 
-	(*geometry)->numTriangles = 12;
+	(*geometry)->numTriangles = sizeof(cubeIndices) / sizeof(cubeIndices[0]) / 3;
 }
 
 void initModel(const std::string ModelName, std::vector<ObjectGeometry*> *ModelGeometries) {
@@ -313,6 +314,7 @@ void initSceneObjects() {
 	initCube(&CubeGeometry);
 	initModel(FOXBAT_MODEL_NAME, &FoxBatGeometries);
 	initModel(CAR_MODEL_NAME, &CarGeometries);
+	initModel(ZEPPLIN_MODEL_NAME, &ZepplinGeometries);
 	initModel(TREE1_MODEL_NAME, &Tree1Geometries);
 	initModel(TREE2_MODEL_NAME, &Tree2Geometries);
 }
@@ -369,18 +371,22 @@ void setMaterialUniforms(const Material& material) {
 	glUniform1f(commonShaderProgram.locations.shininess, material.shininess);
 	CHECK_GL_ERROR();
 	if (material.texture != 0) {
-		glUniform1i(commonShaderProgram.locations.useTexture, 1);  // do texture sampling
-		glUniform1i(commonShaderProgram.locations.texSampler, 0);  // texturing unit 0 -> samplerID   [for the GPU linker]
-		glActiveTexture(GL_TEXTURE0 + 0);						   // texturing unit 0 -> to be bound [for OpenGL BindTexture]
+		glUniform1i(commonShaderProgram.locations.useTexture, 1);
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, material.texture);
+		glUniform1i(commonShaderProgram.locations.texSampler, 0);
 	}
 	else {
-		glUniform1i(commonShaderProgram.locations.useTexture, 0);  // do not sample the texture
+		glUniform1i(commonShaderProgram.locations.useTexture, 0);
 	}
 }
 
 void drawPlayer(Player* Player, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
-	if (Player->isInitialized) {
+	if (Player->isInitialized && !Player->destroyed) {
+		glEnable(GL_STENCIL_TEST);
+		glStencilFunc(GL_ALWAYS, Player->id, 0xFF);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+		CHECK_GL_ERROR();
 		glUseProgram(commonShaderProgram.program);
 
 		// prepare modeling transform matrix
@@ -399,14 +405,18 @@ void drawPlayer(Player* Player, const glm::mat4& viewMatrix, const glm::mat4& pr
 
 		glBindVertexArray(0);
 		glUseProgram(0);
-	}
-	else {
-		std::cerr << "Player not initialised" << std::endl;
+
+		glDisable(GL_STENCIL_TEST);
+		CHECK_GL_ERROR();
 	}
 }
 
 void drawTerrain(Terrain* Terrain, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
 	if (Terrain->isInitialized) {
+		glEnable(GL_STENCIL_TEST);
+		glStencilFunc(GL_ALWAYS, Terrain->id, 0xFF);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+		CHECK_GL_ERROR();
 		glUseProgram(commonShaderProgram.program);
 
 		// prepare modeling transform matrix
@@ -426,6 +436,9 @@ void drawTerrain(Terrain* Terrain, const glm::mat4& viewMatrix, const glm::mat4&
 
 		glBindVertexArray(0);
 		glUseProgram(0);
+
+		glDisable(GL_STENCIL_TEST);
+		CHECK_GL_ERROR();
 	}
 	else {
 		std::cerr << "Terrain not initialised" << std::endl;
@@ -434,6 +447,10 @@ void drawTerrain(Terrain* Terrain, const glm::mat4& viewMatrix, const glm::mat4&
 
 void drawCube(Object* Cube, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
 	if (Cube->isInitialized) {
+		glEnable(GL_STENCIL_TEST);
+		glStencilFunc(GL_ALWAYS, Cube->id, 0xFF);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+		CHECK_GL_ERROR();
 		glUseProgram(commonShaderProgram.program);
 
 		// prepare modeling transform matrix
@@ -453,6 +470,9 @@ void drawCube(Object* Cube, const glm::mat4& viewMatrix, const glm::mat4& projec
 
 		glBindVertexArray(0);
 		glUseProgram(0);
+
+		glDisable(GL_STENCIL_TEST);
+		CHECK_GL_ERROR();
 	}
 	else {
 		std::cerr << "Cube not initialised" << std::endl;
@@ -482,6 +502,12 @@ void drawSkybox(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) 
 
 void drawModel(Object* Model, std::vector<ObjectGeometry*> ModelGeometry, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
 	if (Model->isInitialized && !Model->destroyed) {
+
+		glEnable(GL_STENCIL_TEST);
+		glStencilFunc(GL_ALWAYS, Model->id, 0xFF);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+		CHECK_GL_ERROR();
+
 		glUseProgram(commonShaderProgram.program);
 
 		// prepare modelling transform matrix
@@ -501,6 +527,9 @@ void drawModel(Object* Model, std::vector<ObjectGeometry*> ModelGeometry, const 
 		}
 		glBindVertexArray(0);
 		glUseProgram(0);
+
+		glDisable(GL_STENCIL_TEST);
+		CHECK_GL_ERROR();
 	}
 }
 
@@ -538,20 +567,13 @@ void drawObjects(GameObjectsList GameObjects, glm::mat4 viewMatrix, glm::mat4 pr
 	drawTerrain(GameObjects.terrain, viewMatrix, projectionMatrix);
 	drawPlayer(GameObjects.player, viewMatrix, projectionMatrix);
 	drawCube(GameObjects.cube, viewMatrix, projectionMatrix);
-
-	// Interactions with the foxbat
-	glEnable(GL_STENCIL_TEST);
-	CHECK_GL_ERROR();
 	drawModel(GameObjects.foxbat, FoxBatGeometries, viewMatrix, projectionMatrix);
-	glStencilFunc(GL_ALWAYS, 1, 0xFF);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-	glDisable(GL_STENCIL_TEST);
-
+	drawModel(GameObjects.zepplin, ZepplinGeometries, viewMatrix, projectionMatrix);
 	drawModel(GameObjects.car, CarGeometries, viewMatrix, projectionMatrix);
 	drawModel(GameObjects.tree1, Tree1Geometries, viewMatrix, projectionMatrix);
 	drawModel(GameObjects.tree2, Tree2Geometries, viewMatrix, projectionMatrix);
 
-
+	
 	glDisable(GL_DEPTH_TEST);
 	for (std::list<void*>::iterator it = GameObjects.explosions.begin(); it != GameObjects.explosions.end(); ++it) {
 		ExplosionObject* explosion = (ExplosionObject*)(*it);
@@ -574,6 +596,20 @@ void cleanupModels() {
 	cleanupGeometry(PlayerGeometry);
 	cleanupGeometry(TerrainGeometry);
 	cleanupGeometry(SkyboxGeometry);
+	cleanupGeometry(ExplosionGeometry);
+	cleanupGeometry(CubeGeometry);
+	for (size_t i = 0; i < FoxBatGeometries.size(); i++) {
+		cleanupGeometry(FoxBatGeometries[i]);
+	}
+	for (size_t i = 0; i < CarGeometries.size(); i++) {
+		cleanupGeometry(CarGeometries[i]);
+	}
+	for (size_t i = 0; i < Tree1Geometries.size(); i++) {
+		cleanupGeometry(Tree1Geometries[i]);
+	}
+	for (size_t i = 0; i < Tree2Geometries.size(); i++) {
+		cleanupGeometry(Tree2Geometries[i]);
+	}
 }
 
 // -----------------------  Loading .obj file ---------------------------------
@@ -615,38 +651,50 @@ bool loadMeshes(const std::string& fileName, ShaderProgram& shader, std::vector<
 		// get the current mesh
 		const aiMesh* mesh = scn->mMeshes[i];
 
-		ObjectGeometry* geometry = new ObjectGeometry();
+		ObjectGeometry* geometry = new ObjectGeometry;
 
-		glGenBuffers(1, &geometry->vertexBufferObject);
+		// vertex buffer object, store all vertex positions and normals
+		glGenBuffers(1, &(geometry->vertexBufferObject));
 		glBindBuffer(GL_ARRAY_BUFFER, geometry->vertexBufferObject);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * mesh->mNumVertices * 8, NULL, GL_STATIC_DRAW);
-		CHECK_GL_ERROR();
+		glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(float) * mesh->mNumVertices, 0, GL_STATIC_DRAW); // allocate memory for vertices, normals, and texture coordinates
+		// first store all vertices
+		glBufferSubData(GL_ARRAY_BUFFER, 0, 3 * sizeof(float) * mesh->mNumVertices, mesh->mVertices);
+		// then store all normals
+		glBufferSubData(GL_ARRAY_BUFFER, 3 * sizeof(float) * mesh->mNumVertices, 3 * sizeof(float) * mesh->mNumVertices, mesh->mNormals);
 
-		// copy vertices
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * mesh->mNumVertices * 3, mesh->mVertices);
-		CHECK_GL_ERROR();
-
-		// copy normals
-		glBufferSubData(GL_ARRAY_BUFFER, sizeof(float) * mesh->mNumVertices * 3, sizeof(float) * mesh->mNumVertices * 3, mesh->mNormals);
-		CHECK_GL_ERROR();
+		// just texture 0 for now
+		float* textureCoords = new float[2 * mesh->mNumVertices];  // 2 floats per vertex
+		float* currentTextureCoord = textureCoords;
 
 		// copy texture coordinates
+		aiVector3D vect;
+
 		if (mesh->HasTextureCoords(0)) {
-			glBufferSubData(GL_ARRAY_BUFFER, sizeof(float) * mesh->mNumVertices * 6, sizeof(float) * mesh->mNumVertices * 2, mesh->mTextureCoords[0]);
-			CHECK_GL_ERROR();
+			// we use 2D textures with 2 coordinates and ignore the third coordinate
+			for (unsigned int idx = 0; idx < mesh->mNumVertices; idx++) {
+				vect = (mesh->mTextureCoords[0])[idx];
+				*currentTextureCoord++ = vect.x;
+				*currentTextureCoord++ = vect.y;
+			}
 		}
 
-		// copy indices
-		geometry->numTriangles = mesh->mNumFaces;
-		glGenBuffers(1, &geometry->elementBufferObject);
+		// finally store all texture coordinates
+		glBufferSubData(GL_ARRAY_BUFFER, 6 * sizeof(float) * mesh->mNumVertices, 2 * sizeof(float) * mesh->mNumVertices, textureCoords);
+
+		// copy all mesh faces into one big array (assimp supports faces with ordinary number of vertices, we use only 3 -> triangles)
+		unsigned int* indices = new unsigned int[mesh->mNumFaces * 3];
+		for (unsigned int f = 0; f < mesh->mNumFaces; ++f) {
+			indices[f * 3 + 0] = mesh->mFaces[f].mIndices[0];
+			indices[f * 3 + 1] = mesh->mFaces[f].mIndices[1];
+			indices[f * 3 + 2] = mesh->mFaces[f].mIndices[2];
+		}
+
+		// copy our temporary index array to OpenGL and free the array
+		glGenBuffers(1, &(geometry->elementBufferObject));
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geometry->elementBufferObject);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * mesh->mNumFaces * 3, NULL, GL_STATIC_DRAW);
-		CHECK_GL_ERROR();
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * sizeof(unsigned) * mesh->mNumFaces, indices, GL_STATIC_DRAW);
 
-		for (unsigned int i = 0; i < mesh->mNumFaces; ++i) {
-			glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * i * 3, sizeof(unsigned int) * 3, mesh->mFaces[i].mIndices);
-			CHECK_GL_ERROR();
-		}
+		delete[] indices;
 
 		// copy material
 		// copy the material info to structure
@@ -702,6 +750,9 @@ bool loadMeshes(const std::string& fileName, ShaderProgram& shader, std::vector<
 
 			std::cout << "Loading texture file: " << textureName << std::endl;
 			geometry->material.texture = pgr::createTexture(textureName);
+		}
+		else {
+			std::cout << "No texture found for mesh " << i << std::endl;
 		}
 		CHECK_GL_ERROR();
 

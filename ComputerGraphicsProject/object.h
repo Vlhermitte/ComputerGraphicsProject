@@ -16,6 +16,7 @@
 #define PLAYER_MODEL_NAME "data/ghoul/ghoul.obj"
 #define TERRAIN_MODEL_NAME "data/terrainV3/terrain.obj"
 #define FOXBAT_MODEL_NAME "data/MiG25_foxbat/MiG25_foxbat.obj"
+#define ZEPPLIN_MODEL_NAME "data/zepplin/Airship.obj"
 #define F5ETIGERII_MODEL_NAME "data/F5ETigerII/F-5ETigerII.obj"
 #define CAR_MODEL_NAME "data/RaceCar/RaceCar.obj"
 #define TREE1_MODEL_NAME "data/tree1/Tree.obj"
@@ -177,13 +178,13 @@ struct Mesh {
 /**
  * \brief Object in the scene.
  */
-typedef struct Object {
+typedef struct _Object {
+	int id;				// The id will be used to identify the object when using the stencil test
 	glm::vec3 position;
 	glm::vec3 direction;
 	float     speed;
 	float     verticalSpeed;
 	float     size;
-	glm::vec3 enable_spot;
 
 	bool destroyed;
 
@@ -191,30 +192,47 @@ typedef struct Object {
 	float currentTime;
 
 	bool isInitialized;
+
+	_Object(int objectId) :
+		destroyed(false),
+		isInitialized(false),
+		startTime(0.0f),
+		currentTime(0.0f),
+		position(glm::vec3(0.0f)),
+		direction(glm::vec3(0.0f)),
+		speed(0.0f),
+		verticalSpeed(0.0f),
+		size(1.0f) 
+	{
+		id = objectId;
+	}
 } Object;
 
 typedef struct _Terrain : public Object {
-
+	_Terrain(int id) : Object(id) {}
 } Terrain;
 
 typedef struct _Player : public Object {
 	float viewAngle; // in degrees
 	bool isAgainsAnObject; // false
+
+	_Player(int id) : Object(id) {}
+
 } Player;
 
-typedef struct _Foxbat : public Object {
+typedef struct _Aircraft : public Object {
 	bool isMoving;
 	float rotationSpeed;
 	glm::vec3 initPosition;
-} Foxbat;
 
-typedef struct _F5ETigerII : public Object {
-
-} F5ETigerII;
+	_Aircraft(int id) : Object(id) {}
+} Aircraft;
 
 typedef struct _ExplosionObject : public Object {
 	int    textureFrames;
 	float  frameDuration;
+
+	_ExplosionObject() : Object(-1) {}
 } ExplosionObject;
 
 

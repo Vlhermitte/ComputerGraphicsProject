@@ -50,12 +50,6 @@ void initApplication() {
 	// init scene objects
 	initSceneObjects();
 
-	GameObjects.player = NULL;
-	GameObjects.foxbat = NULL;
-	GameObjects.terrain = NULL;
-	GameObjects.cube = NULL;
-	GameObjects.car = NULL;
-
 	// init your Application
 	// - setup the initial application state
 
@@ -109,31 +103,35 @@ void restartGame() {
 
 void reinisialiseObjects() {
 	if (GameObjects.player == NULL) {
-		GameObjects.player = new Player();
+		GameObjects.player = new Player(1);
 		GameObjects.player->isInitialized = true;
 	}
 	if (GameObjects.terrain == NULL) {
-		GameObjects.terrain = new Terrain();
+		GameObjects.terrain = new Terrain(2);
 		GameObjects.terrain->isInitialized = true;
 	}
 	if (GameObjects.cube == NULL) {
-		GameObjects.cube = new Object();
+		GameObjects.cube = new Object(3);
 		GameObjects.cube->isInitialized = true;
 	}
 	if (GameObjects.foxbat == NULL) {
-		GameObjects.foxbat = new Foxbat();
+		GameObjects.foxbat = new Aircraft(4);
 		GameObjects.foxbat->isInitialized = true;
 	}
+	if (GameObjects.zepplin == NULL) {
+		GameObjects.zepplin = new Aircraft(5);
+		GameObjects.zepplin->isInitialized = true;
+	}
 	if (GameObjects.car == NULL) {
-		GameObjects.car = new Object();
+		GameObjects.car = new Object(6);
 		GameObjects.car->isInitialized = true;
 	}
 	if (GameObjects.tree1 == NULL) {
-		GameObjects.tree1 = new Object();
+		GameObjects.tree1 = new Object(7);
 		GameObjects.tree1->isInitialized = true;
 	}
 	if (GameObjects.tree2 == NULL) {
-		GameObjects.tree2 = new Object();
+		GameObjects.tree2 = new Object(8);
 		GameObjects.tree2->isInitialized = true;
 	}
 
@@ -148,7 +146,7 @@ void reinisialiseObjects() {
 	GameObjects.player->currentTime = GameObjects.player->startTime;
 
 	// Reinitialization Cube
-	GameObjects.cube->position = glm::vec3(-0.5f, 0.48f, 0.15f);
+	GameObjects.cube->position = glm::vec3(-0.5f, 0.48f, MIN_HEIGHT -0.2f);
 	GameObjects.cube->direction = glm::vec3(0.0f, 0.0f, 0.0f);
 	GameObjects.cube->speed = 0.0f;
 	GameObjects.cube->size = CUBE_SIZE;
@@ -161,30 +159,40 @@ void reinisialiseObjects() {
 	GameObjects.foxbat->initPosition = GameObjects.foxbat->position;
 	GameObjects.foxbat->direction = glm::vec3(0.8f, 0.5f, 0.0f);
 	GameObjects.foxbat->speed = 0.4f;
-	GameObjects.foxbat->size = FOXBAT_SIZE;
+	GameObjects.foxbat->size = AIRCRAFT_SIZE;
 	GameObjects.foxbat->destroyed = false;
-	GameObjects.foxbat->isMoving = false;
+	GameObjects.foxbat->isMoving = true;
+
+	// Reinitialization Zepplin object
+	GameObjects.zepplin->position = glm::vec3(-0.1f, 0.5f, 0.0f);
+	GameObjects.zepplin->initPosition = GameObjects.zepplin->position;
+	GameObjects.zepplin->direction = glm::vec3(-0.8f, 0.5f, 0.0f);
+	GameObjects.zepplin->speed = 0.4f;
+	GameObjects.zepplin->size = AIRCRAFT_SIZE;
+	GameObjects.zepplin->destroyed = false;
+	GameObjects.zepplin->isMoving = false; // For now not doing anything, but will implement zepplin movement later
 
 	// Reinitialization Car object
-	GameObjects.car->position = glm::vec3(0.8f, 0.15f, -0.3f);
+	GameObjects.car->position = glm::vec3(0.8f, 0.15f, MIN_HEIGHT-CAR_SIZE);
 	GameObjects.car->direction = glm::vec3(0.1f, 0.1f, 0.0f);
 	GameObjects.car->speed = 0.0f;
 	GameObjects.car->size = CAR_SIZE;
 	GameObjects.car->destroyed = false;
 
 	// Reinitialization Tree1 object
-	GameObjects.tree1->position = glm::vec3(-0.7f, -0.6f, -0.15f);
+	GameObjects.tree1->position = glm::vec3(-0.7f, -0.6f, MIN_HEIGHT);
 	GameObjects.tree1->direction = glm::vec3(0.1f, 0.1f, 0.0f);
 	GameObjects.tree1->speed = 0.0f;
 	GameObjects.tree1->size = TREE_SIZE;
 	GameObjects.tree1->destroyed = false;
 
 	// Reinitialization Tree2 object
-	GameObjects.tree2->position = glm::vec3(0.6f, 0.3f, -0.15f);
+	GameObjects.tree2->position = glm::vec3(0.6f, 0.3f, MIN_HEIGHT);
 	GameObjects.tree2->direction = glm::vec3(0.1f, 0.1f, 0.0f);
 	GameObjects.tree2->speed = 0.0f;
 	GameObjects.tree2->size = TREE_SIZE;
 	GameObjects.tree2->destroyed = false;
+
 
 	// Setting up the terrain with position (0,0,MIN_HEIGHT) (xyz)
 	GameObjects.terrain->position = glm::vec3(0.0f, 0.0f, MIN_HEIGHT);
@@ -197,20 +205,58 @@ void reinisialiseObjects() {
 void cleanUpObjects() {
 	// delete all non essential objects (i.e not the player and the terrain)
 	// TODO : Delete objects when we have impl
+
+	// delete explosions
+	std::list<void*>::iterator it = GameObjects.explosions.begin();
+	while (it != GameObjects.explosions.end()) {
+		ExplosionObject* explosion = (ExplosionObject*)(*it);
+		delete explosion;
+		it = GameObjects.explosions.erase(it);
+	}
+	// delete foxbat
+	if (GameObjects.foxbat != NULL) {
+		delete GameObjects.foxbat;
+		GameObjects.foxbat = NULL;
+	}
+	// delete cube
+	if (GameObjects.cube != NULL) {
+		delete GameObjects.cube;
+		GameObjects.cube = NULL;
+	}
+	// delete car
+	if (GameObjects.car != NULL) {
+		delete GameObjects.car;
+		GameObjects.car = NULL;
+	}
+	// delete tree1
+	if (GameObjects.tree1 != NULL) {
+		delete GameObjects.tree1;
+		GameObjects.tree1 = NULL;
+	}
+	// delete tree2
+	if (GameObjects.tree2 != NULL) {
+		delete GameObjects.tree2;
+		GameObjects.tree2 = NULL;
+	}
 }
 
 // -----------------------  Colision Detection ---------------------------------
 
-bool detectColision(const glm::vec3& point, const glm::vec3& center, float radius) {
+/**
+ * \brief Check if the object is out of bounds.
+ * \param position Position of the object.
+ * \param objectSize Size of the object.
+ * \return Clamped position of the object.
+ */
+bool detectColision(const glm::vec3& center1, float radius1, const glm::vec3& center2, float radius2) {
 	// Using sphere colision detection
-	float distance = glm::distance(point, center);
-	return distance < radius;
+	float distance = glm::distance(center1, center2);
+	return distance < (radius1 + radius2) * 0.7;
 }
-
 
 void checkCollisions() {
 	// check colision between player and foxbat
-	if (!GameObjects.foxbat->destroyed && detectColision(GameObjects.player->position, GameObjects.foxbat->position, GameObjects.foxbat->size)) {
+	if (!GameObjects.foxbat->destroyed && detectColision(GameObjects.player->position, GameObjects.player->size, GameObjects.foxbat->position, GameObjects.foxbat->size)) {
 		// add explosion
 		addExplosion(GameObjects.foxbat->position);
 		// destroy foxbat
@@ -218,7 +264,7 @@ void checkCollisions() {
 	}
 
 	// check colision between player and tree1
-	if (!GameObjects.tree1->destroyed && detectColision(GameObjects.player->position, GameObjects.tree1->position, GameObjects.tree1->size)) {
+	if (!GameObjects.tree1->destroyed && detectColision(GameObjects.player->position, GameObjects.player->size, GameObjects.tree1->position, GameObjects.tree1->size)) {
 		// add explosion
 		addExplosion(GameObjects.tree1->position);
 		// destroy tree1
@@ -226,12 +272,29 @@ void checkCollisions() {
 	}
 
 	// check colision between player and tree2
-	if (!GameObjects.tree2->destroyed && detectColision(GameObjects.player->position, GameObjects.tree2->position, GameObjects.tree2->size)) {
+	if (!GameObjects.tree2->destroyed && detectColision(GameObjects.player->position, GameObjects.player->size, GameObjects.tree2->position, GameObjects.tree2->size)) {
 		// add explosion
 		addExplosion(GameObjects.tree2->position);
 		// destroy tree2
 		GameObjects.tree2->destroyed = true;
 	}
+
+	// check colision between player and zepplin
+	if (!GameObjects.player->destroyed && detectColision(GameObjects.player->position, GameObjects.player->size, GameObjects.zepplin->position, GameObjects.zepplin->size)) {
+		// add explosion
+		addExplosion(GameObjects.player->position);
+		// destroy player
+		GameObjects.zepplin->destroyed = true;
+	}
+
+	// check colision between player and cube (if the player hits the cube the game is over)
+	if (!GameObjects.player->destroyed && detectColision(GameObjects.player->position, GameObjects.player->size, GameObjects.cube->position, GameObjects.cube->size)) {
+		// add explosion
+		addExplosion(GameObjects.player->position);
+		// destroy player
+		GameObjects.player->destroyed = true;
+	}
+
 }
 
 
@@ -325,7 +388,7 @@ void updateObjects(float elapsedTime) {
 	checkCollisions();
 	
 	// Update Player
-	GameObjects.player->position += GameObjects.player->direction * GameObjects.player->speed * 0.01f;
+	GameObjects.player->position += GameObjects.player->direction * GameObjects.player->speed * 0.015f;
 	// We clamp the player position to the scene size 
 	// Not using the checkBounds() because we don't want to teleport the player to the other side of the scene
 	GameObjects.player->position = glm::clamp(
@@ -352,7 +415,7 @@ void updateObjects(float elapsedTime) {
 		0.0f
 	);
 	// make the cube move up and down
-	GameObjects.cube->position.z = 0.2f + 0.1f * std::sin(GameObjects.cube->currentTime);
+	GameObjects.cube->position.z = (-MIN_HEIGHT - 0.08f) + 0.1f * std::sin(GameObjects.cube->currentTime);
 
 	// Update Explosion frame (ietrate through the list of frames)
 	std::list<void*>::iterator it = GameObjects.explosions.begin();
@@ -381,7 +444,7 @@ void updateObjects(float elapsedTime) {
 */
 void addExplosion(const glm::vec3& position) {
 
-	ExplosionObject* newExplosion = new ExplosionObject;
+	ExplosionObject* newExplosion = new ExplosionObject();
 
 	newExplosion->speed = 0.0f;
 	newExplosion->destroyed = false;
@@ -407,7 +470,7 @@ void addExplosion(const glm::vec3& position) {
  */
 void displayCb() {
 
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	// draw the window contents (scene objects)
 	drawScene();
@@ -435,6 +498,30 @@ void mouseMotionCb(int mouseX, int mouseY) {
 	glutWarpPointer(GameState.windowWidth / 2, GameState.windowHeight / 2);
 
 	glutPostRedisplay();
+}
+
+void mouseCb(int buttonPressed, int buttonState, int mouseX, int mouseY) {
+	// do picking only on mouse down
+	if ((buttonPressed == GLUT_LEFT_BUTTON) && (buttonState == GLUT_DOWN)) {
+		unsigned int objectID = 0;
+		int y = GameState.windowHeight - mouseY - 1;
+		glReadPixels(mouseX, y, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, &objectID);
+		if (objectID != 0) {
+			std::cout << "Clicked on Object with id : " << objectID << std::endl;
+
+			if (objectID == GameObjects.car->id) {
+				addExplosion(GameObjects.car->position);
+				GameObjects.car->destroyed = true;
+				std::cout << "Car exploded" << std::endl;
+			}
+		}
+		else {
+			std::cout << "Clicked on the background" << std::endl;
+		}
+
+
+		
+	}
 }
 
 // The keyboard callback is triggered when keyboard function keys or ASCII
@@ -508,31 +595,13 @@ void keyboardCb(unsigned char keyPressed, int mouseX, int mouseY) {
 				printf("Car destroyed\n");
 			}
 			break;
-
-		// Disbaled because buggy
-		/*case ' ':
-			GameState.keyMap[KEY_SPACE] = true;
-			break;
-		case 'b':
-			GameState.keyMap[KEY_B] = true;
-			break;*/
 	default:
 		break;
 	}
 }
 
 void keyboardUpCb(unsigned char keyReleased, int mouseX, int mouseY) {
-
-	switch (keyReleased) {
-	case ' ':
-		GameState.keyMap[KEY_SPACE] = false;
-		break;
-	case 'b':
-		GameState.keyMap[KEY_B] = false;
-		break;
-	default:
-		break;
-	}
+	// void for now
 }
 
 // The special keyboard callback is triggered when keyboard function or directional
@@ -621,16 +690,6 @@ void movePlayerRight(float deltaAngle) {
 	GameObjects.player->direction = newVector;
 }
 
-void movePlayerUp(float deltaSpeed) {
-	printf("Player up : position: %f, %f, %f\n", GameObjects.player->position.x, GameObjects.player->position.y, GameObjects.player->position.z);
-	GameObjects.player->verticalSpeed += deltaSpeed;
-}
-
-void movePlayerDown(float deltaSpeed) {
-	printf("Player down : position: %f, %f, %f\n", GameObjects.player->position.x, GameObjects.player->position.y, GameObjects.player->position.z);
-	GameObjects.player->verticalSpeed -= deltaSpeed;
-}
-
 // -----------------------  GLUT callbacks ---------------------------------
 
 /**
@@ -700,7 +759,7 @@ int main(int argc, char** argv) {
 		// glutKeyboardUpFunc(keyboardUpCb);
 		glutSpecialFunc(specialPressedKeyboardCb);     // key pressed
 		glutSpecialUpFunc(specialReleasedKeyboardUpCb); // key released
-		// glutMouseFunc(mouseCb);
+		glutMouseFunc(mouseCb);
 		// glutMotionFunc(mouseMotionCb);
 		glutTimerFunc(1000 / 30, timerCb, 0); // redraw every 30 ms
 

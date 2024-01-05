@@ -17,11 +17,24 @@ typedef struct _GameObjects {
 	Player* player;
 	Terrain* terrain;
 	Object* cube;
-	Foxbat* foxbat;
+	Aircraft* foxbat;
+	Aircraft* zepplin;
 	std::list<void*> explosions;
 	Object* car;
 	Object* tree1;
 	Object* tree2;
+
+	_GameObjects() {
+		player = NULL;
+		terrain = NULL;
+		cube = NULL;
+		foxbat = NULL;
+		zepplin = NULL;
+		car = NULL;
+		tree1 = NULL;
+		tree2 = NULL;
+	}
+
 } GameObjectsList;
 
 extern GameObjectsList GameObjects;

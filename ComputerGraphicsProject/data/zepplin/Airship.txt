@@ -1,0 +1,10 @@
+#DownloadModelFormat: OBJ
+#GeometryFile: Airship.obj
+#MaterialFile: Airship.mtl
+#PreviewFile: Airship.jpg
+#OtherFiles: Airship.blend
+#CreatedBy: Natálie Kaslová
+#CreatedIn: Blender 3.1.2
+#UploadedBy: Natálie Kaslová
+#Description: Lowpoly model of airship
+#NumberOfPolygons: 254
