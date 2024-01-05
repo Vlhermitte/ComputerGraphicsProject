@@ -12,6 +12,7 @@ struct _GameState {
 	bool fogOn; // false
 	bool turnSunOn; // true
 	bool useSpotLight; // false
+	bool gameOver;
 
 	int windowWidth; // 800 (currently not used)
 	int windowHeight; // 800 (currently not used)
@@ -654,6 +655,42 @@ void specialReleasedKeyboardUpCb(int specKeyReleased, int mouseX, int mouseY) {
 	}
 }
 
+
+// -----------------------  Menus ---------------------------------
+
+void sunMenu(int menuItemId) {
+	switch (menuItemId) {
+	case 1:
+		GameState.turnSunOn = true;
+		break;
+	case 2:
+		GameState.turnSunOn = false;
+		break;
+	}
+}
+
+void fogMenu(int menuItemId) {
+	switch (menuItemId) {
+	case 1:
+		GameState.fogOn = true;
+		break;
+	case 2:
+		GameState.fogOn = false;
+		break;
+	}
+}
+
+void mainMenu(int menuItemId) {
+	switch (menuItemId) {
+	// TODO : ADD MORE CASES
+	case 1:
+		finalizeApplication();
+		exit(0);
+		break;
+	}
+}
+
+
 // -----------------------  Player Movements handeling ---------------------------------
 
 void movePlayerForward(float deltaSpeed) {
@@ -711,12 +748,6 @@ void timerCb(int timerId) {
 
 	if (GameState.keyMap[KEY_LEFT_ARROW] == true)
 		movePlayerLeft(PLAYER_VIEW_ANGLE_DELTA);
-
-	if (GameState.keyMap[KEY_SPACE] == true)
-		movePlayerUp(PLAYER_UP_SPEED_INCREMENT);
-
-	if (GameState.keyMap[KEY_B] == true)
-		movePlayerDown(PLAYER_UP_SPEED_INCREMENT);
 	
 	// update objects in the scene
 	updateObjects(GameState.elapsedTime);
@@ -765,6 +796,26 @@ int main(int argc, char** argv) {
 
 	}
 	// end for each window 
+
+	// Menus section
+	// Menu for Sun
+	int idSun = glutCreateMenu(sunMenu);
+	glutAddMenuEntry("Sun on", 1);
+	glutAddMenuEntry("Sun off", 2);
+
+	// Menu for Fog
+	int idFog = glutCreateMenu(sunMenu);
+	glutAddMenuEntry("Fog on", 1);
+	glutAddMenuEntry("Fog off", 2);
+
+	glutCreateMenu(mainMenu);
+	glutAddSubMenu("Sun", idSun);
+	glutAddSubMenu("Fog", idFog);
+
+	glutAddMenuEntry("Quit", 1);
+
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
+
 
 	// initialize pgr-framework (GL, DevIl, etc.)
 	if (!pgr::initialize(pgr::OGL_VER_MAJOR, pgr::OGL_VER_MINOR))

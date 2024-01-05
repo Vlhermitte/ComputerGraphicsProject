@@ -502,7 +502,7 @@ void drawSkybox(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) 
 
 void drawModel(Object* Model, std::vector<ObjectGeometry*> ModelGeometry, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
 	if (Model->isInitialized && !Model->destroyed) {
-
+		
 		glEnable(GL_STENCIL_TEST);
 		glStencilFunc(GL_ALWAYS, Model->id, 0xFF);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);

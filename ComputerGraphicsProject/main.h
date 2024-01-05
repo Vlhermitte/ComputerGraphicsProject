@@ -40,8 +40,6 @@ void movePlayerForward(float deltaSpeed);
 void movePlayerBackward(float deltaSpeed);
 void movePlayerLeft(float deltaSpeed);
 void movePlayerRight(float deltaSpeed);
-void movePlayerUp(float deltaSpeed);
-void movePlayerDown(float deltaSpeed);
 
 // -----------------------  GLUT callbacks ---------------------------------
 void timerCb(int timerId);
