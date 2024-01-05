@@ -46,12 +46,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="vertexShader.vert">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="fragementShader.frag">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="skyboxFragmentShader.frag">
       <Filter>Shaders</Filter>
     </None>

@@ -201,12 +201,10 @@
   <ItemGroup>
     <None Include="explosionVertexShader.vert" />
     <None Include="explosionFragmentShader.frag" />
-    <None Include="fragementShader.frag" />
     <None Include="lightingShaderPerFrag.frag" />
     <None Include="lightingShaderPerFrag.vert" />
     <None Include="skyboxFragmentShader.frag" />
     <None Include="skyboxVertexShader.vert" />
-    <None Include="vertexShader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
