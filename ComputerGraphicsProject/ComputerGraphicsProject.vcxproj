@@ -199,6 +199,8 @@
     <ClInclude Include="spline.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="bannerFragmentShader.frag" />
+    <None Include="bannerVertexShader.vert" />
     <None Include="explosionVertexShader.vert" />
     <None Include="explosionFragmentShader.frag" />
     <None Include="lightingShaderPerFrag.frag" />

@@ -64,5 +64,11 @@
     <None Include="lightingShaderPerFrag.vert">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="bannerVertexShader.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="bannerFragmentShader.frag">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
