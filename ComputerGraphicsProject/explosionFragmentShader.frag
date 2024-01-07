@@ -6,8 +6,6 @@ uniform sampler2D texSampler; // sampler for texture access
 smooth in vec3 position_v;    // camera space fragment position
 smooth in vec2 texCoord_v;    // fragment texture coordinates
 
-out vec4 color_f;             // outgoing fragment color
-
 // there are 8 frames in the row, two rows total
 uniform ivec2 pattern = ivec2(8, 2);
 // one frame lasts 0.1s
@@ -24,5 +22,5 @@ void main() {
   int frame = int(time / frameDuration);
 
   // sample proper frame of the texture to get a fragment color  
-  color_f = sampleTexture(frame);
+  gl_FragColor = sampleTexture(frame);
 }
