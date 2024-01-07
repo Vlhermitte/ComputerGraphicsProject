@@ -100,6 +100,8 @@ void restartGame() {
 
 	GameState.fogOn = false;
 
+	GameState.gameOver = false;
+
 	// reset key map
 	for (int i = 0; i < KEYS_COUNT; i++)
 		GameState.keyMap[i] = false;
@@ -138,6 +140,10 @@ void reinisialiseObjects() {
 		GameObjects.tree2 = new Object(8);
 		GameObjects.tree2->isInitialized = true;
 	}
+	if (GameObjects.gameOver == NULL) {
+		GameObjects.gameOver = new Object(9);
+		GameObjects.gameOver->isInitialized = true;
+	}
 
 	// Reinitialization Player
 	GameObjects.player->position = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -174,7 +180,7 @@ void reinisialiseObjects() {
 	GameObjects.zepplin->speed = 0.4f;
 	GameObjects.zepplin->size = AIRCRAFT_SIZE;
 	GameObjects.zepplin->destroyed = false;
-	GameObjects.zepplin->isMoving = false; // For now not doing anything, but will implement zepplin movement later
+	GameObjects.zepplin->isMoving = false;
 
 	// Reinitialization Car object
 	GameObjects.car->position = glm::vec3(0.8f, 0.15f, MIN_HEIGHT-CAR_SIZE);
@@ -197,10 +203,19 @@ void reinisialiseObjects() {
 	GameObjects.tree2->size = TREE_SIZE;
 	GameObjects.tree2->destroyed = false;
 
-
 	// Setting up the terrain with position (0,0,MIN_HEIGHT) (xyz)
 	GameObjects.terrain->position = glm::vec3(0.0f, 0.0f, MIN_HEIGHT);
 	GameObjects.terrain->size = TERRAIN_SIZE;
+
+	// Banner 
+	GameObjects.gameOver->position = glm::vec3(0.0f);
+	GameObjects.gameOver->direction = glm::vec3(0.0f, 1.0f, 0.0f);
+	GameObjects.gameOver->speed = 0.0f;
+	GameObjects.gameOver->size = BANNER_SIZE;
+	GameObjects.gameOver->destroyed = false;
+	GameObjects.gameOver->startTime = GameState.elapsedTime;
+	GameObjects.gameOver->currentTime = GameObjects.gameOver->startTime;
+
 }
 
 /**
@@ -391,6 +406,11 @@ void drawScene() {
 	// draw skybox (only if the fog is off)
 	if (!GameState.fogOn)
 		drawSkybox(viewMatrix, projectionMatrix);
+
+	// draw game over banner (if game over)
+	if (GameState.gameOver && GameObjects.gameOver != NULL) {
+		drawGameOver(GameObjects.gameOver, orthoViewMatrix, orthoProjectionMatrix);
+	}
 }
 
 /**
@@ -402,6 +422,14 @@ void drawScene() {
 void updateObjects(float elapsedTime) {
 	// update the scene objects
 	float timeDelta = elapsedTime - GameObjects.player->currentTime;
+
+	if (GameObjects.player->destroyed) {
+		GameState.gameOver = GameObjects.player->destroyed;
+	}
+
+	if ((GameState.gameOver == true) && (GameObjects.gameOver != NULL)) {
+		GameObjects.gameOver->currentTime = GameState.elapsedTime;
+	}
 
 	// Check colisions 
 	checkCollisions();
@@ -733,7 +761,9 @@ void cameraMenu(int menuIteamId) {
 
 void mainMenu(int menuItemId) {
 	switch (menuItemId) {
-	// TODO : ADD MORE CASES
+	case 0:
+		GameState.gameOver = true;
+		break;
 	case 1:
 		finalizeApplication();
 		exit(0);
@@ -855,7 +885,7 @@ int main(int argc, char** argv) {
 	glutAddMenuEntry("Sun off", 2);
 
 	// Menu for Fog
-	int idFog = glutCreateMenu(sunMenu);
+	int idFog = glutCreateMenu(fogMenu);
 	glutAddMenuEntry("Fog on", 1);
 	glutAddMenuEntry("Fog off", 2);
 
@@ -870,6 +900,7 @@ int main(int argc, char** argv) {
 	glutAddSubMenu("Fog", idFog);
 	glutAddSubMenu("Camera", idCamera);
 
+	glutAddMenuEntry("Game Over", 0);
 	glutAddMenuEntry("Quit", 1);
 
 	glutAttachMenu(GLUT_RIGHT_BUTTON);

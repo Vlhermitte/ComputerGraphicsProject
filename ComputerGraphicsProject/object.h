@@ -24,6 +24,8 @@
 
 #define SKYBOX_PATH_NAME "data/skybox"
 #define EXPLOSION_TEXTURE_NAME "data/explode.png";
+#define GAMEOVER_BANNER_NAME "data/gameOver.png"
+#define CUBE_TEXTURE_NAME "data/crate.jpg"
 
 /**
  * \brief Shader program related stuff (id, locations, ...).
@@ -136,6 +138,27 @@ typedef struct _ExplosionShaderProgram {
 		locations.frameDuration = -1;
 	}
 } ExplosionShaderProgram;
+
+typedef struct _BannerShaderProgram {
+	GLuint program;
+	bool initialized;
+
+	struct locations {
+		GLint position;
+		GLint PVM;
+		GLint time;
+		GLint texCoord;
+		GLint texSampler;
+	} locations;
+
+	_BannerShaderProgram() : program(0), initialized(false) {
+		locations.position = -1;
+		locations.PVM = -1;
+		locations.time = -1;
+		locations.texCoord = -1;
+		locations.texSampler = -1;
+	}
+} BannerShaderProgram;
 
 
 /**

@@ -9,14 +9,15 @@
 #define SCENE_HEIGHT 1.0f
 #define SCENE_DEPTH  1.0f
 
-#define PLAYER_SIZE   0.05f
-#define TERRAIN_SIZE  1.0f
-#define CUBE_SIZE     0.1f
-#define FLOOR_SIZE	1.0f
-#define AIRCRAFT_SIZE   0.1f
-#define CAR_SIZE   0.1f
-#define TREE_SIZE   0.2f
-#define TORCH_SIZE   1.0f
+#define PLAYER_SIZE 0.05f
+#define TERRAIN_SIZE 1.0f
+#define CUBE_SIZE 0.1f
+#define FLOOR_SIZE 1.0f
+#define AIRCRAFT_SIZE 0.1f
+#define CAR_SIZE 0.1f
+#define TREE_SIZE 0.2f
+#define TORCH_SIZE 1.0f
+#define BANNER_SIZE 1.0f
 
 #define CAMERA_ELEVATION_MAX 50.0f
 
@@ -41,26 +42,50 @@ enum {
 };
 
 
-// FIX THIS - normals are not correct
+
 const float cubeVertices[] = {
-	// position (x,y,z)   color (r,g,b)      normals (x,y,nz)
+	// position (x, y, z)   u, v   normal (x, y, z)
 	// Front face (z positive)
-	-0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, 0.5f,
-	 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, 0.5f,
-	 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, 0.5f,
-	-0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, 0.5f,
+	-0.5f, -0.5f,  0.5f, 0.0f, 0.0f,   0.0f, 0.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f, 1.0f, 0.0f,   0.0f, 0.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f,
+	-0.5f,  0.5f,  0.5f, 0.0f, 1.0f,   0.0f, 0.0f, 1.0f,
 
 	// Back face (z negative)
-	-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, -0.5f,
-	 0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, -0.5f,
-	 0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, -0.5f,
-	-0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 0.0f,  0.0f, 0.0f, -0.5f,
+	-0.5f, -0.5f, -0.5f, 1.0f, 0.0f,   0.0f, 0.0f, -1.0f,
+	 0.5f, -0.5f, -0.5f, 0.0f, 0.0f,   0.0f, 0.0f, -1.0f,
+	 0.5f,  0.5f, -0.5f, 0.0f, 1.0f,   0.0f, 0.0f, -1.0f,
+	-0.5f,  0.5f, -0.5f, 1.0f, 1.0f,   0.0f, 0.0f, -1.0f,
+
+	// Left face (x negative)
+	-0.5f, -0.5f, -0.5f, 0.0f, 0.0f,   -1.0f, 0.0f, 0.0f,
+	-0.5f, -0.5f,  0.5f, 1.0f, 0.0f,   -1.0f, 0.0f, 0.0f,
+	-0.5f,  0.5f,  0.5f, 1.0f, 1.0f,   -1.0f, 0.0f, 0.0f,
+	-0.5f,  0.5f, -0.5f, 0.0f, 1.0f,   -1.0f, 0.0f, 0.0f,
+
+	// Right face (x positive)
+	 0.5f, -0.5f, -0.5f, 1.0f, 0.0f,    1.0f, 0.0f, 0.0f,
+	 0.5f, -0.5f,  0.5f, 0.0f, 0.0f,    1.0f, 0.0f, 0.0f,
+	 0.5f,  0.5f,  0.5f, 0.0f, 1.0f,    1.0f, 0.0f, 0.0f,
+	 0.5f,  0.5f, -0.5f, 1.0f, 1.0f,    1.0f, 0.0f, 0.0f,
+
+	 // Top face (y positive)
+	 -0.5f,  0.5f, -0.5f, 0.0f, 1.0f,   0.0f, 1.0f, 0.0f,
+	  0.5f,  0.5f, -0.5f, 1.0f, 1.0f,   0.0f, 1.0f, 0.0f,
+	  0.5f,  0.5f,  0.5f, 1.0f, 0.0f,   0.0f, 1.0f, 0.0f,
+	 -0.5f,  0.5f,  0.5f, 0.0f, 0.0f,   0.0f, 1.0f, 0.0f,
+
+	 // Bottom face (y negative)
+	 -0.5f, -0.5f, -0.5f, 1.0f, 1.0f,   0.0f, -1.0f, 0.0f,
+	  0.5f, -0.5f, -0.5f, 0.0f, 1.0f,   0.0f, -1.0f, 0.0f,
+	  0.5f, -0.5f,  0.5f, 0.0f, 0.0f,   0.0f, -1.0f, 0.0f,
+	 -0.5f, -0.5f,  0.5f, 1.0f, 0.0f,   0.0f, -1.0f, 0.0f
 };
 
 
 const unsigned int cubeIndices[] = {
 	// Front face
-	0, 1, 2,
+	0, 1, 2, 
 	2, 3, 0,
 
 	// Back face
@@ -68,21 +93,22 @@ const unsigned int cubeIndices[] = {
 	6, 7, 4,
 
 	// Left face
-	0, 3, 7,
-	7, 4, 0,
+	8, 9, 10,
+	10, 11, 8,
 
 	// Right face
-	1, 5, 6,
-	6, 2, 1,
+	12, 13, 14,
+	14, 15, 12,
 
 	// Top face
-	3, 2, 6,
-	6, 7, 3,
+	16, 17, 18,
+	18, 19, 16,
 
 	// Bottom face
-	0, 1, 5,
-	5, 4, 0,
+	20, 21, 22,
+	22, 23, 20
 };
+
 
 const int explosionNumQuadVertices = 4;
 const float explosionVertexData[explosionNumQuadVertices * 5] = {
@@ -91,6 +117,16 @@ const float explosionVertexData[explosionNumQuadVertices * 5] = {
    1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
   -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
    1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+};
+
+
+const int bannerNumQuadVertices = 4;
+const float bannerVertexData[bannerNumQuadVertices * 5] = {
+	  //  x      y     z     u     v
+	  -1.0f,  0.15f, 0.0f, 0.0f, 1.0f,
+	  -1.0f, -0.15f, 0.0f, 0.0f, 0.0f,
+	   1.0f,  0.15f, 0.0f, 3.0f, 1.0f,
+	   1.0f, -0.15f, 0.0f, 3.0f, 0.0f
 };
 
 #endif // __DATA_H

@@ -7,6 +7,7 @@ ObjectGeometry* PlayerGeometry = NULL;
 ObjectGeometry* SkyboxGeometry = NULL;
 ObjectGeometry* ExplosionGeometry = NULL;
 ObjectGeometry* CubeGeometry = NULL;
+ObjectGeometry* BannerGeometry = NULL;
 std::vector<ObjectGeometry*> FoxBatGeometries;
 std::vector<ObjectGeometry*> CarGeometries;
 std::vector<ObjectGeometry*> Tree1Geometries;
@@ -16,6 +17,8 @@ std::vector<ObjectGeometry*> ZepplinGeometries;
 ShaderProgram commonShaderProgram;
 SkyboxShaderProgram skyboxShaderProgram;
 ExplosionShaderProgram explosionShaderProgram;
+BannerShaderProgram bannerShaderProgram;
+
 
 GameObjectsList GameObjects;
 
@@ -134,6 +137,28 @@ void loadShaderPrograms() {
 
 	explosionShaderProgram.initialized = true;
 	shaderList.clear();
+
+	// Banner shader
+	shaderList.push_back(pgr::createShaderFromFile(GL_VERTEX_SHADER, "bannerVertexShader.vert"));
+	shaderList.push_back(pgr::createShaderFromFile(GL_FRAGMENT_SHADER, "bannerFragmentShader.frag"));
+
+	bannerShaderProgram.program = pgr::createProgram(shaderList);
+
+	bannerShaderProgram.locations.position = glGetAttribLocation(bannerShaderProgram.program, "position");
+	bannerShaderProgram.locations.texCoord = glGetAttribLocation(bannerShaderProgram.program, "texCoord");
+	bannerShaderProgram.locations.PVM = glGetUniformLocation(bannerShaderProgram.program, "PVM");
+	bannerShaderProgram.locations.texSampler = glGetUniformLocation(bannerShaderProgram.program, "texSampler");
+	bannerShaderProgram.locations.time = glGetUniformLocation(bannerShaderProgram.program, "time");
+
+	WARN_IF(bannerShaderProgram.locations.position == -1, "bannerShaderProgram.locations.position == -1");
+	WARN_IF(bannerShaderProgram.locations.PVM == -1, "bannerShaderProgram.locations.PVM == -1");
+	WARN_IF(bannerShaderProgram.locations.texCoord == -1, "bannerShaderProgram.locations.texCoord == -1");
+	WARN_IF(bannerShaderProgram.locations.texSampler == -1, "bannerShaderProgram.locations.texSampler == -1");
+	WARN_IF(bannerShaderProgram.locations.time == -1, "bannerShaderProgram.locations.time == -1");
+
+	bannerShaderProgram.initialized = true;
+	shaderList.clear();
+
 }
 
 /**
@@ -255,8 +280,37 @@ void initExplosion(ObjectGeometry ** geometry) {
 	(*geometry)->numTriangles = explosionNumQuadVertices;
 }
 
+void initBanner(ObjectGeometry** geometry) {
+	*geometry = new ObjectGeometry;
+
+	(*geometry)->material.texture = pgr::createTexture(GAMEOVER_BANNER_NAME);
+	glBindTexture(GL_TEXTURE_2D, (*geometry)->material.texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+	glGenVertexArrays(1, &((*geometry)->vertexArrayObject));
+	glBindVertexArray((*geometry)->vertexArrayObject);
+
+	glGenBuffers(1, &((*geometry)->vertexBufferObject));
+	glBindBuffer(GL_ARRAY_BUFFER, (*geometry)->vertexBufferObject);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(bannerVertexData), bannerVertexData, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(bannerShaderProgram.locations.position);
+	glEnableVertexAttribArray(bannerShaderProgram.locations.texCoord);
+	// vertices of triangles - start at the beginning of the interlaced array
+	glVertexAttribPointer(bannerShaderProgram.locations.position, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 0);
+	// texture coordinates of each vertices are stored just after its position
+	glVertexAttribPointer(bannerShaderProgram.locations.texCoord, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+
+	glBindVertexArray(0);
+
+	(*geometry)->numTriangles = bannerNumQuadVertices;
+}
+
 void initCube(ObjectGeometry** geometry) {
 	*geometry = new ObjectGeometry();
+
+	std::string textureName = CUBE_TEXTURE_NAME;
+	(*geometry)->material.texture = pgr::createTexture(textureName);
 
 	// VAO
 	glGenVertexArrays(1, &((*geometry)->vertexArrayObject));
@@ -274,25 +328,24 @@ void initCube(ObjectGeometry** geometry) {
 
 	// Position attribute
 	glEnableVertexAttribArray(commonShaderProgram.locations.position);
-	glVertexAttribPointer(commonShaderProgram.locations.position, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), 0);
+	glVertexAttribPointer(commonShaderProgram.locations.position, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 0);
 	CHECK_GL_ERROR();
 
-	// Color attribute
-	glEnableVertexAttribArray(commonShaderProgram.locations.color);
-	glVertexAttribPointer(commonShaderProgram.locations.color, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
+	// Texture attribute
+	glEnableVertexAttribArray(commonShaderProgram.locations.texCoord);
+	glVertexAttribPointer(commonShaderProgram.locations.texCoord, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	CHECK_GL_ERROR();
 
 	// Normal attribute
 	glEnableVertexAttribArray(commonShaderProgram.locations.normal);
-	glVertexAttribPointer(commonShaderProgram.locations.normal, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
+	glVertexAttribPointer(commonShaderProgram.locations.normal, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
 	CHECK_GL_ERROR();
 
 	(*geometry)->material.ambient = glm::vec3(1.0f, 0.0f, 1.0f);
 	(*geometry)->material.diffuse = glm::vec3(1.0f, 0.0f, 1.0f);
 	(*geometry)->material.specular = glm::vec3(1.0f, 0.0f, 1.0f);
 	(*geometry)->material.shininess = 10.0f;
-	(*geometry)->material.texture = 0;
-
+	
 	glBindVertexArray(0);
 	CHECK_GL_ERROR();
 
@@ -311,6 +364,7 @@ void initSceneObjects() {
 	initPlayer();
 	initSkybox();
 	initExplosion(&ExplosionGeometry);
+	initBanner(&BannerGeometry);
 	initCube(&CubeGeometry);
 	initModel(FOXBAT_MODEL_NAME, &FoxBatGeometries);
 	initModel(CAR_MODEL_NAME, &CarGeometries);
@@ -546,8 +600,6 @@ void drawExplosion(ExplosionObject* explosion, const glm::mat4& viewMatrix, cons
 	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(explosion->size));
 	glm::mat4 PVMmatrix = projectionMatrix * viewTranslateRotateMatrix * scaleMatrix;
 
-	//glUniformMatrix4fv(explosionShaderProgram.locations.ViewMatrix, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f))); // viewMatrix = identity matrix
-
 	glUniformMatrix4fv(explosionShaderProgram.locations.PVM, 1, GL_FALSE, glm::value_ptr(PVMmatrix));  // model-view-projection
 	glUniform1f(explosionShaderProgram.locations.time, explosion->currentTime - explosion->startTime);
 	glUniform1i(explosionShaderProgram.locations.texSampler, 0);
@@ -560,6 +612,35 @@ void drawExplosion(ExplosionObject* explosion, const glm::mat4& viewMatrix, cons
 	glBindVertexArray(0);
 	glUseProgram(0);
 
+	glDisable(GL_BLEND);
+}
+
+void drawGameOver(Object* Banner, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glDisable(GL_DEPTH_TEST);
+
+	glUseProgram(bannerShaderProgram.program);
+
+	glm::mat4 matrix = glm::translate(glm::mat4(1.0f), Banner->position);
+	matrix = glm::scale(matrix, glm::vec3(Banner->size));
+
+	glm::mat4 PVMmatrix = projectionMatrix * viewMatrix * matrix;
+	glUniformMatrix4fv(bannerShaderProgram.locations.PVM, 1, GL_FALSE, glm::value_ptr(PVMmatrix));        // model-view-projection
+	glUniform1f(bannerShaderProgram.locations.time, Banner->currentTime - Banner->startTime);
+	glUniform1i(bannerShaderProgram.locations.texSampler, 0);
+
+	glBindTexture(GL_TEXTURE_2D, BannerGeometry->material.texture);
+	glBindVertexArray(BannerGeometry->vertexArrayObject);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, BannerGeometry->numTriangles);
+
+	CHECK_GL_ERROR();
+
+	glBindVertexArray(0);
+	glUseProgram(0);
+
+	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 }
 
