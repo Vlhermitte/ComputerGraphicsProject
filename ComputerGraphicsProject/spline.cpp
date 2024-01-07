@@ -155,10 +155,9 @@ glm::vec3 evaluateClosedCurve_1stDerivative(const glm::vec3 points[], const size
 }
 
 
-/// Number of control points of the animation curve.
-const size_t curveSize = 12;
 
-/// Control points of the animation curve.
+
+/// Control points of the animation curve. (Foxbat)
 glm::vec3 curveData[] = {
   glm::vec3(0.0, 0.0,  0.0),
 
@@ -176,3 +175,116 @@ glm::vec3 curveData[] = {
   glm::vec3(0.66, -0.35, 0.0),
   glm::vec3(0.33, -0.35, 0.0)
 };
+/// Number of control points of the animation curve. (Foxbat)
+const size_t curveSize = sizeof(curveData) / sizeof(glm::vec3);
+
+
+/// Control points of the animation curve. (Camera)
+glm::vec3 curveDataCamera[] = {
+     glm::vec3(-0.7f, 0.0f, 0.1f),
+     glm::vec3(-0.35f, -0.35f, 0.1f),
+     glm::vec3(0.0f, -0.7f, 0.1f),
+     glm::vec3(0.35f, -0.35f, 0.1f),
+     glm::vec3(0.7f, 0.0f, 0.1f),
+     glm::vec3(0.35f, 0.35f, 0.1f),
+     glm::vec3(0.0f, 0.7f, 0.1f),
+     glm::vec3(-0.35f, 0.35f, 0.1f)
+};
+/// Number of control points of the animation curve. (Camera)
+const size_t curveSizeCamera = sizeof(curveDataCamera) / sizeof(glm::vec3);
+
+//**************************************************************************************************
+/// Curve validity test points.
+glm::vec3 curveTestPoints[] = {
+  glm::vec3(-9.0f, 0.0f, -5.0f),
+  glm::vec3(-3.0f, 0.0f,  5.0f),
+  glm::vec3(3.0f, 4.0f, -5.0f),
+  glm::vec3(9.0f, 0.0f,  0.0f),
+};
+
+/// Correct result for curve position in range [0, 1] with step 0.05.
+glm::vec3 curveTestGoldfile[] = {
+  glm::vec3(-3.000000, 0.000000,  5.000000),
+  glm::vec3(-2.700000, 0.119250,  4.933437),
+  glm::vec3(-2.400000, 0.274000,  4.742500),
+  glm::vec3(-2.100000, 0.459750,  4.440312),
+  glm::vec3(-1.800000, 0.672000,  4.040000),
+  glm::vec3(-1.500000, 0.906250,  3.554688),
+  glm::vec3(-1.200000, 1.158000,  2.997500),
+  glm::vec3(-0.900000, 1.422750,  2.381562),
+  glm::vec3(-0.600000, 1.696000,  1.720000),
+  glm::vec3(-0.300000, 1.973250,  1.025937),
+  glm::vec3(0.000000, 2.250000,  0.312500),
+  glm::vec3(0.300000, 2.521750, -0.407188),
+  glm::vec3(0.600000, 2.784000, -1.120000),
+  glm::vec3(0.900000, 3.032250, -1.812812),
+  glm::vec3(1.200000, 3.262000, -2.472499),
+  glm::vec3(1.500000, 3.468750, -3.085938),
+  glm::vec3(1.800000, 3.648000, -3.640001),
+  glm::vec3(2.100000, 3.795250, -4.121563),
+  glm::vec3(2.400000, 3.906000, -4.517500),
+  glm::vec3(2.700000, 3.975750, -4.814687),
+  glm::vec3(3.000000, 4.000000, -5.000000)
+};
+/// Correct result for curve 1st derivative in range [0, 1] with step 0.05.
+glm::vec3 curveTestGoldfile_1stDerivative[] = {
+  glm::vec3(6.000000, 2.000000,   0.000000),
+  glm::vec3(6.000000, 2.755000, -2.618750),
+  glm::vec3(6.000000, 3.420000, -4.975000),
+  glm::vec3(6.000000, 3.995000, -7.068750),
+  glm::vec3(6.000000, 4.480000, -8.900000),
+  glm::vec3(6.000000, 4.875000, -10.468750),
+  glm::vec3(6.000000, 5.180000, -11.775001),
+  glm::vec3(6.000000, 5.395000, -12.818750),
+  glm::vec3(6.000000, 5.520000, -13.599999),
+  glm::vec3(6.000000, 5.555000, -14.118751),
+  glm::vec3(6.000000, 5.500000, -14.375000),
+  glm::vec3(6.000000, 5.355000, -14.368751),
+  glm::vec3(6.000000, 5.120000, -14.100000),
+  glm::vec3(6.000000, 4.795001, -13.568751),
+  glm::vec3(6.000000, 4.380000, -12.775001),
+  glm::vec3(6.000000, 3.875000, -11.718750),
+  glm::vec3(6.000000, 3.279999, -10.399999),
+  glm::vec3(6.000000, 2.595000, -8.818749),
+  glm::vec3(6.000000, 1.820001, -6.975001),
+  glm::vec3(6.000000, 0.955000, -4.868751),
+  glm::vec3(6.000000, 0.000000, -2.500000)
+};
+
+
+
+void testSpline(glm::vec3 *curveTestPoints, glm::vec3 *curveTestGoldfile, glm::vec3 *curveTestGoldfile_1stDerivative) {
+    bool curveValid;
+    bool curve1stDerivativeValid;
+
+    const float marginOfError = 1e-5f;
+    int numTest = 21;
+    for (int i = 0; i < numTest; i++) {
+        float t = i / 20.f;
+
+        glm::vec3 computedPoint = evaluateCurveSegment(
+            curveTestPoints[0],
+            curveTestPoints[1],
+            curveTestPoints[2],
+            curveTestPoints[3],
+            t
+        );
+
+        glm::vec3 computedPoint_1stDerivative = evaluateCurveSegment_1stDerivative(
+            curveTestPoints[0],
+            curveTestPoints[1],
+            curveTestPoints[2],
+            curveTestPoints[3],
+            t
+        );
+
+        curveValid = glm::distance(curveTestGoldfile[i], computedPoint) < marginOfError;
+        curve1stDerivativeValid = glm::distance(curveTestGoldfile_1stDerivative[i], computedPoint_1stDerivative) < marginOfError;
+
+        if (!curveValid || !curveValid)
+            // As soon as we fail a test we stop
+            break;
+    }
+    std::cout << "Curve test: " << (curveValid ? "OK" : "FAIL") << std::endl;
+    std::cout << "Curve 1st derivative test: " << (curve1stDerivativeValid ? "OK" : "FAIL") << std::endl;
+}

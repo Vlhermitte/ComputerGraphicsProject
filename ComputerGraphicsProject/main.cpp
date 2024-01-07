@@ -6,6 +6,7 @@ struct _GameState {
 	bool wireframeMode; // false
 	bool fpsCameraMode; // false
 	bool sceneCamera; // false
+	bool splineCamera; // false
 	float cameraElevationAngle; // in degrees
 	float elapsedTime; // in seconds
 	bool keyMap[KEYS_COUNT]; 
@@ -20,7 +21,8 @@ struct _GameState {
 	_GameState() : 
 		wireframeMode(false), 
 		fpsCameraMode(false), 
-		sceneCamera(false), 
+		sceneCamera(false),
+		splineCamera(false),
 		cameraElevationAngle(0.0f), 
 		elapsedTime(0.0f), 
 		fogOn(false),
@@ -51,8 +53,8 @@ void initApplication() {
 	// init scene objects
 	initSceneObjects();
 
-	// init your Application
-	// - setup the initial application state
+	// tests
+	testSpline(curveTestPoints, curveTestGoldfile, curveTestGoldfile_1stDerivative);
 
 	// restart the game
 	restartGame();
@@ -88,9 +90,10 @@ void restartGame() {
 	reinisialiseObjects();
 
 	// GameState reinitialization
-	if (GameState.fpsCameraMode or GameState.sceneCamera) {
+	if (GameState.fpsCameraMode or GameState.sceneCamera or GameState.splineCamera) {
 		GameState.fpsCameraMode = false;
 		GameState.sceneCamera = false;
+		GameState.splineCamera = false;
 		glutPassiveMotionFunc(NULL);
 	}
 	GameState.cameraElevationAngle = 0.0f;
@@ -165,9 +168,9 @@ void reinisialiseObjects() {
 	GameObjects.foxbat->isMoving = true;
 
 	// Reinitialization Zepplin object
-	GameObjects.zepplin->position = glm::vec3(-0.1f, 0.5f, 0.0f);
+	GameObjects.zepplin->position = glm::vec3(0.3f, -0.4f, 0.0f);
 	GameObjects.zepplin->initPosition = GameObjects.zepplin->position;
-	GameObjects.zepplin->direction = glm::vec3(-0.8f, 0.5f, 0.0f);
+	GameObjects.zepplin->direction = glm::vec3(0.8f, -0.5f, 0.0f);
 	GameObjects.zepplin->speed = 0.4f;
 	GameObjects.zepplin->size = AIRCRAFT_SIZE;
 	GameObjects.zepplin->destroyed = false;
@@ -283,7 +286,7 @@ void checkCollisions() {
 	// check colision between player and zepplin
 	if (!GameObjects.player->destroyed && detectColision(GameObjects.player->position, GameObjects.player->size, GameObjects.zepplin->position, GameObjects.zepplin->size)) {
 		// add explosion
-		addExplosion(GameObjects.player->position);
+		addExplosion(GameObjects.zepplin->position);
 		// destroy player
 		GameObjects.zepplin->destroyed = true;
 	}
@@ -355,6 +358,21 @@ void drawScene() {
 		projectionMatrix = glm::perspective(glm::radians(100.0f), GameState.windowWidth / (float)GameState.windowHeight, 0.1f, 10.0f);
 
 	}
+	else if (GameState.splineCamera) {
+		glm::vec3 cameraUpVector = glm::vec3(0.0f, 0.0f, 1.0f);
+		float curveParamT = GameObjects.player->currentTime * 0.2f;
+		glm::vec3 cameraPosition = evaluateClosedCurve(curveDataCamera, curveSizeCamera, curveParamT);
+		glm::vec3 cameraTarget = GameObjects.player->position;
+
+		viewMatrix = glm::lookAt(
+			cameraPosition,
+			cameraTarget,
+			cameraUpVector
+		);
+
+		projectionMatrix = glm::perspective(glm::radians(80.0f), GameState.windowWidth / (float)GameState.windowHeight, 0.1f, 10.0f);
+
+	}
 
 	CHECK_GL_ERROR();
 
@@ -389,6 +407,7 @@ void updateObjects(float elapsedTime) {
 	checkCollisions();
 	
 	// Update Player
+	GameObjects.player->currentTime = elapsedTime;
 	GameObjects.player->position += GameObjects.player->direction * GameObjects.player->speed * 0.015f;
 	// We clamp the player position to the scene size 
 	// Not using the checkBounds() because we don't want to teleport the player to the other side of the scene
@@ -666,7 +685,10 @@ void sunMenu(int menuItemId) {
 	case 2:
 		GameState.turnSunOn = false;
 		break;
+	default:
+		break;
 	}
+
 }
 
 void fogMenu(int menuItemId) {
@@ -676,6 +698,35 @@ void fogMenu(int menuItemId) {
 		break;
 	case 2:
 		GameState.fogOn = false;
+		break;
+	default:
+		break;
+	}
+}
+
+void cameraMenu(int menuIteamId) {
+	switch (menuIteamId) {
+	case 0:
+		GameState.fpsCameraMode = false;
+		GameState.sceneCamera = false;
+		GameState.splineCamera = false;
+		break;
+	case 1:
+		GameState.fpsCameraMode = true;
+		GameState.sceneCamera = false;
+		GameState.splineCamera = false;
+		break;
+	case 2:
+		GameState.sceneCamera = true;
+		GameState.fpsCameraMode = false;
+		GameState.splineCamera = false;
+		break;
+	case 3:
+		GameState.splineCamera = true;
+		GameState.sceneCamera = false;
+		GameState.fpsCameraMode = false;
+		break;
+	default:
 		break;
 	}
 }
@@ -808,9 +859,16 @@ int main(int argc, char** argv) {
 	glutAddMenuEntry("Fog on", 1);
 	glutAddMenuEntry("Fog off", 2);
 
+	int idCamera = glutCreateMenu(cameraMenu);
+	glutAddMenuEntry("Top view", 0);
+	glutAddMenuEntry("FPS camera", 1);
+	glutAddMenuEntry("Scene camera", 2);
+	glutAddMenuEntry("Spline camera", 3);
+
 	glutCreateMenu(mainMenu);
 	glutAddSubMenu("Sun", idSun);
 	glutAddSubMenu("Fog", idFog);
+	glutAddSubMenu("Camera", idCamera);
 
 	glutAddMenuEntry("Quit", 1);
 
