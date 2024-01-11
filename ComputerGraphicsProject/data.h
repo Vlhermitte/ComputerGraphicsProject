@@ -1,3 +1,10 @@
+/*
+* \file data.h
+* \author Valentin Lhermitte
+* \date 2023-2024
+* \brief Various parameters
+*/
+
 #pragma once
 
 #ifndef __DATA_H
@@ -15,7 +22,7 @@
 #define FLOOR_SIZE 1.0f
 #define AIRCRAFT_SIZE 0.1f
 #define CAR_SIZE 0.1f
-#define TREE_SIZE 0.2f
+#define TREE_SIZE 0.25f
 #define TORCH_SIZE 1.0f
 #define BANNER_SIZE 1.0f
 

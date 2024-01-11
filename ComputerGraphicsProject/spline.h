@@ -1,3 +1,10 @@
+/*
+* \file spline.h
+* \author Valentin Lhermitte
+* \date 2023-2024
+* \brief Spline calculation
+*/
+
 #pragma once
 
 #ifndef __SPLINE_H

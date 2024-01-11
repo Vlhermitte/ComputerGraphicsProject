@@ -1,3 +1,10 @@
+/*
+* \file object.h
+* \author Valentin Lhermitte
+* \date 2023-2024
+* \brief Paths to objetc, struct to represent those objects
+*/
+
 #pragma once
 
 #ifndef __OBJECT_H
@@ -19,6 +26,8 @@
 #define ZEPPLIN_MODEL_NAME "data/zepplin/Airship.obj"
 #define F5ETIGERII_MODEL_NAME "data/F5ETigerII/F-5ETigerII.obj"
 #define CAR_MODEL_NAME "data/RaceCar/RaceCar.obj"
+#define POLICE_MODEL_NAME "data/PoliceCar/PoliceCar.obj"
+#define CADILLAC_MODEL_NAME "data/cadillac/Cadillac_CT4_V_2022.obj"
 #define TREE1_MODEL_NAME "data/tree1/Tree.obj"
 #define TREE2_MODEL_NAME "data/tree2/Tree2.obj"
 
@@ -63,6 +72,11 @@ typedef struct _ShaderProgram {
 
 		GLint fogOn;
 
+		GLint sunAmbient;
+		GLint sunDiffuse;
+		GLint sunSpecular;
+		GLint sunPosition;
+		GLint sunSpotDirection;
 		GLint turnSunOn;
 		GLint useSpotLight;
 		GLint spotLightPosition;
@@ -89,7 +103,11 @@ typedef struct _ShaderProgram {
 		locations.NormalMatrix = -1;
 
 		locations.fogOn = -1;
-
+		locations.sunAmbient = -1;
+		locations.sunDiffuse = -1;
+		locations.sunSpecular = -1;
+		locations.sunPosition = -1;
+		locations.sunSpotDirection = -1;
 		locations.useSpotLight = -1;
 		locations.spotLightPosition = -1;
 		locations.spotLightDirection = -1;
@@ -171,6 +189,19 @@ typedef struct _Material {
 	float		  shininess;
 	GLuint		  texture;
 } Material;
+
+/**
+ * \brief Light
+ */
+struct Light {         // structure describing light parameters
+	glm::vec3  ambient;       // intensity & color of the ambient component
+	glm::vec3  diffuse;       // intensity & color of the diffuse component
+	glm::vec3  specular;      // intensity & color of the specular component
+	glm::vec3  position;      // light position
+	glm::vec3  spotDirection; // spotlight direction
+	float spotCosCutOff; // cosine of the spotlight's half angle
+	float spotExponent;  // distribution of the light energy within the reflector's cone (center->cone's edge)
+};
 
 /**
  * \brief Geometry of an object (vertices, triangles).

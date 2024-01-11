@@ -33,8 +33,12 @@ uniform mat4 NormalMatrix;
 uniform float time; // Time since the beginning of the program
 uniform bool fogOn;
 
+
 uniform bool turnSunOn;
 uniform bool useSpotLight;
+uniform vec3 sunAmbient;
+uniform vec3 sunDiffuse;
+uniform vec3 sunSpecular;
 uniform vec3 spotLightPosition;
 uniform vec3 spotLightDirection;
 uniform vec3 viewPosition; // Position of the camera/view
@@ -51,11 +55,10 @@ Light playerLight;
 
 void SetupLight() {
 	// Light parameters
-	// sun.position = vec3(1.0f, 1.0f, 1.0f);
 
-	sun.ambient  = vec3(0.2f, 0.2f, 0.2f);
-	sun.diffuse  = vec3(0.8f, 0.8f, 0.8f);
-	sun.specular = vec3(1.0f, 1.0f, 1.0f);
+	sun.ambient  = sunAmbient;
+	sun.diffuse  = sunDiffuse;
+	sun.specular = sunSpecular;
 	sun.position = (ViewMatrix * vec4(cos(time * sunSpeed), 0.0f, sin(time * sunSpeed), 0.0f)).xyz;
 	sun.spotDirection = normalize((ViewMatrix * vec4(spotLightDirection, 0.0)).xyz);
 

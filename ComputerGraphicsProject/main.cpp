@@ -1,3 +1,11 @@
+/*
+* \file main.cpp
+* \author Valentin Lhermitte
+* \date 2023-2024
+* \brief Computer Graphics Project
+*/
+
+
 #include <iostream>
 #include "main.h"
 
@@ -132,16 +140,24 @@ void reinisialiseObjects() {
 		GameObjects.car = new Object(6);
 		GameObjects.car->isInitialized = true;
 	}
+	if (GameObjects.police == NULL) {
+		GameObjects.police = new Object(7);
+		GameObjects.police->isInitialized = true;
+	}
+	if (GameObjects.cadillac == NULL) {
+		GameObjects.cadillac = new Object(8);
+		GameObjects.cadillac->isInitialized = true;
+	}
 	if (GameObjects.tree1 == NULL) {
-		GameObjects.tree1 = new Object(7);
+		GameObjects.tree1 = new Object(9);
 		GameObjects.tree1->isInitialized = true;
 	}
 	if (GameObjects.tree2 == NULL) {
-		GameObjects.tree2 = new Object(8);
+		GameObjects.tree2 = new Object(10);
 		GameObjects.tree2->isInitialized = true;
 	}
 	if (GameObjects.gameOver == NULL) {
-		GameObjects.gameOver = new Object(9);
+		GameObjects.gameOver = new Object(11);
 		GameObjects.gameOver->isInitialized = true;
 	}
 
@@ -188,6 +204,21 @@ void reinisialiseObjects() {
 	GameObjects.car->speed = 0.0f;
 	GameObjects.car->size = CAR_SIZE;
 	GameObjects.car->destroyed = false;
+
+	// Reinitialization Police object
+	GameObjects.police->position = glm::vec3(0.5f, 0.2f, MIN_HEIGHT - CAR_SIZE);
+	GameObjects.police->direction = glm::vec3(0.0f, 0.1f, 0.0f);
+	GameObjects.police->speed = 0.0f;
+	GameObjects.police->size = CAR_SIZE;
+	GameObjects.police->destroyed = false;
+
+	// Reinitialization Cadillac object
+	GameObjects.cadillac->position = glm::vec3(0.85f, -0.2f, MIN_HEIGHT - CAR_SIZE);
+	GameObjects.cadillac->direction = glm::vec3(0.0f, -0.1f, 0.0f);
+	GameObjects.cadillac->speed = 0.0f;
+	GameObjects.cadillac->size = CAR_SIZE;
+	GameObjects.cadillac->destroyed = false;
+
 
 	// Reinitialization Tree1 object
 	GameObjects.tree1->position = glm::vec3(-0.7f, -0.6f, MIN_HEIGHT);
@@ -425,6 +456,7 @@ void updateObjects(float elapsedTime) {
 
 	if (GameObjects.player->destroyed) {
 		GameState.gameOver = GameObjects.player->destroyed;
+		GameObjects.player->speed = 0.0f;
 	}
 
 	if ((GameState.gameOver == true) && (GameObjects.gameOver != NULL)) {
@@ -433,7 +465,7 @@ void updateObjects(float elapsedTime) {
 
 	// Check colisions 
 	checkCollisions();
-	
+
 	// Update Player
 	GameObjects.player->currentTime = elapsedTime;
 	GameObjects.player->position += GameObjects.player->direction * GameObjects.player->speed * 0.015f;
@@ -561,6 +593,14 @@ void mouseCb(int buttonPressed, int buttonState, int mouseX, int mouseY) {
 				addExplosion(GameObjects.car->position);
 				GameObjects.car->destroyed = true;
 				std::cout << "Car exploded" << std::endl;
+			} else if (objectID == GameObjects.police->id) {
+				addExplosion(GameObjects.police->position);
+				GameObjects.police->destroyed = true;
+				std::cout << "Police car exploded" << std::endl;
+			} else if (objectID == GameObjects.cadillac->id) {
+				addExplosion(GameObjects.cadillac->position);
+				GameObjects.cadillac->destroyed = true;
+				std::cout << "Cadillac car exploded" << std::endl;
 			}
 		}
 		else {

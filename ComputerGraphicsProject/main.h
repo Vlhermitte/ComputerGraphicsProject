@@ -1,3 +1,10 @@
+/*
+* \file main.h
+* \author Valentin Lhermitte
+* \date 2023-2024
+* \brief Computer Graphics Project
+*/
+
 #pragma once
 
 #ifndef __MAIN_H
@@ -7,8 +14,8 @@
 #include "renderer.h"
 #include "spline.h"
 
-constexpr int WINDOW_WIDTH = 800;
-constexpr int WINDOW_HEIGHT = 800;
+constexpr int WINDOW_WIDTH = 750;
+constexpr int WINDOW_HEIGHT = 750;
 constexpr char WINDOW_TITLE[] = "Project Computer Graphics Valentin Lhermitte";
 
 // ----------------------- Application ---------------------------------

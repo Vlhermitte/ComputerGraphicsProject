@@ -1,3 +1,10 @@
+/*
+* \file renderer.h
+* \author Valentin Lhermitte
+* \date 2023-2024
+* \brief Renderer  - intit, drawing functions for models, etc..
+*/
+
 #pragma once
 
 #ifndef __RENDERER_H
@@ -21,6 +28,8 @@ typedef struct _GameObjects {
 	Aircraft* zepplin;
 	std::list<void*> explosions;
 	Object* car;
+	Object* police;
+	Object* cadillac;
 	Object* tree1;
 	Object* tree2;
 	Object* gameOver;
@@ -32,6 +41,8 @@ typedef struct _GameObjects {
 		foxbat = NULL;
 		zepplin = NULL;
 		car = NULL;
+		police = NULL;
+		cadillac = NULL;
 		tree1 = NULL;
 		tree2 = NULL;
 		gameOver = NULL;

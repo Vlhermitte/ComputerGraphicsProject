@@ -1,5 +1,11 @@
-#include <iostream>
+/*
+* \file renderer.cpp
+* \author Valentin Lhermitte
+* \date 2023-2024
+* \brief Renderer  - intit, drawing functions for models, etc..
+*/
 
+#include <iostream>
 #include "renderer.h"
 
 ObjectGeometry* TerrainGeometry = NULL;
@@ -10,6 +16,8 @@ ObjectGeometry* CubeGeometry = NULL;
 ObjectGeometry* BannerGeometry = NULL;
 std::vector<ObjectGeometry*> FoxBatGeometries;
 std::vector<ObjectGeometry*> CarGeometries;
+std::vector<ObjectGeometry*> PoliceGeometries;
+std::vector<ObjectGeometry*> CadillacGeometries;
 std::vector<ObjectGeometry*> Tree1Geometries;
 std::vector<ObjectGeometry*> Tree2Geometries;
 std::vector<ObjectGeometry*> ZepplinGeometries;
@@ -58,6 +66,9 @@ void loadShaderPrograms() {
 	commonShaderProgram.locations.fogOn = glGetUniformLocation(commonShaderProgram.program, "fogOn");
 
 	// Lights
+	commonShaderProgram.locations.sunAmbient = glGetUniformLocation(commonShaderProgram.program, "sunAmbient");
+	commonShaderProgram.locations.sunDiffuse = glGetUniformLocation(commonShaderProgram.program, "sunDiffuse");
+	commonShaderProgram.locations.sunSpecular = glGetUniformLocation(commonShaderProgram.program, "sunSpecular");
 	commonShaderProgram.locations.turnSunOn = glGetUniformLocation(commonShaderProgram.program, "turnSunOn");
 	commonShaderProgram.locations.useSpotLight = glGetUniformLocation(commonShaderProgram.program, "useSpotLight");
 	commonShaderProgram.locations.spotLightPosition = glGetUniformLocation(commonShaderProgram.program, "spotLightPosition");
@@ -81,6 +92,10 @@ void loadShaderPrograms() {
 	assert(commonShaderProgram.locations.ViewMatrix != -1);
 	assert(commonShaderProgram.locations.ModelMatrix != -1);
 	assert(commonShaderProgram.locations.NormalMatrix != -1);
+
+	assert(commonShaderProgram.locations.sunAmbient != -1);
+	assert(commonShaderProgram.locations.sunDiffuse != -1);
+	assert(commonShaderProgram.locations.sunSpecular != -1);
 	
 	WARN_IF(commonShaderProgram.locations.time == -1, "commonShaderProgram.locations.time == -1");
 	WARN_IF(commonShaderProgram.locations.fogOn == -1, "commonShaderProgram.locations.fogOn == -1");
@@ -368,6 +383,8 @@ void initSceneObjects() {
 	initCube(&CubeGeometry);
 	initModel(FOXBAT_MODEL_NAME, &FoxBatGeometries);
 	initModel(CAR_MODEL_NAME, &CarGeometries);
+	initModel(POLICE_MODEL_NAME, &PoliceGeometries);
+	initModel(CADILLAC_MODEL_NAME, &CadillacGeometries);
 	initModel(ZEPPLIN_MODEL_NAME, &ZepplinGeometries);
 	initModel(TREE1_MODEL_NAME, &Tree1Geometries);
 	initModel(TREE2_MODEL_NAME, &Tree2Geometries);
@@ -413,9 +430,17 @@ void setTransformUniforms(const glm::mat4& modelMatrix, const glm::mat4& viewMat
 	);
 	glm::mat4 normalMatrix = glm::transpose(glm::inverse(glm::mat4(glm::mat3(modelRotationMatrix))));
 	glUniformMatrix4fv(commonShaderProgram.locations.NormalMatrix, 1, GL_FALSE, glm::value_ptr(normalMatrix));
-
-
 	CHECK_GL_ERROR();
+
+	// Passing Sun component 
+	Light sun;
+	sun.ambient = glm::vec3(0.2f, 0.2f, 0.2f);
+	sun.diffuse = glm::vec3(0.8f, 0.8f, 0.8f);
+	sun.specular = glm::vec3(1.0f, 1.0f, 1.0f);
+
+	glUniform3fv(commonShaderProgram.locations.sunAmbient, 1, glm::value_ptr(sun.ambient));
+	glUniform3fv(commonShaderProgram.locations.sunDiffuse, 1, glm::value_ptr(sun.diffuse));
+	glUniform3fv(commonShaderProgram.locations.sunSpecular, 1, glm::value_ptr(sun.specular));
 }
 
 void setMaterialUniforms(const Material& material) {
@@ -651,6 +676,8 @@ void drawObjects(GameObjectsList GameObjects, glm::mat4 viewMatrix, glm::mat4 pr
 	drawModel(GameObjects.foxbat, FoxBatGeometries, viewMatrix, projectionMatrix);
 	drawModel(GameObjects.zepplin, ZepplinGeometries, viewMatrix, projectionMatrix);
 	drawModel(GameObjects.car, CarGeometries, viewMatrix, projectionMatrix);
+	drawModel(GameObjects.police, PoliceGeometries, viewMatrix, projectionMatrix);
+	drawModel(GameObjects.cadillac, CadillacGeometries, viewMatrix, projectionMatrix);
 	drawModel(GameObjects.tree1, Tree1Geometries, viewMatrix, projectionMatrix);
 	drawModel(GameObjects.tree2, Tree2Geometries, viewMatrix, projectionMatrix);
 
@@ -684,6 +711,15 @@ void cleanupModels() {
 	}
 	for (size_t i = 0; i < CarGeometries.size(); i++) {
 		cleanupGeometry(CarGeometries[i]);
+	}
+	for (size_t i = 0; i < PoliceGeometries.size(); i++) {
+		cleanupGeometry(PoliceGeometries[i]);
+	}
+	for (size_t i = 0; i < CadillacGeometries.size(); i++) {
+		cleanupGeometry(CadillacGeometries[i]);
+	}
+	for (size_t i = 0; i < ZepplinGeometries.size(); i++) {
+		cleanupGeometry(ZepplinGeometries[i]);
 	}
 	for (size_t i = 0; i < Tree1Geometries.size(); i++) {
 		cleanupGeometry(Tree1Geometries[i]);

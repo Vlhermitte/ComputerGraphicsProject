@@ -1,3 +1,10 @@
+/*
+* \file spline.cpp
+* \author Valentin Lhermitte
+* \date 2023-2024
+* \brief Spline calculation
+*/
+
 #include "spline.h"
 
 /// Checks whether vector is zero-length or not.
