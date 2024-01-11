@@ -48,6 +48,9 @@ smooth in vec3 fragPosition;
 smooth in vec3 fragNormal;
 smooth in vec2 fragTexCoord;
 
+// Outputs to the fragment shader
+out vec4 fragColor;
+
 
 Light sun;
 float sunSpeed = 0.25f;		// sun speed to simulate night and day cycle
@@ -144,5 +147,5 @@ void main() {
         outputColor = mix(outputColor, fogcolor, visibility);
     }
 
-	gl_FragColor = outputColor;
+	fragColor = outputColor;
 }

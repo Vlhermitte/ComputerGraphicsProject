@@ -11,6 +11,8 @@ uniform ivec2 pattern = ivec2(8, 2);
 // one frame lasts 0.1s
 uniform float frameDuration = 0.1f;
 
+out vec4 fragColor;           // fragment color
+
 
 vec4 sampleTexture(int frame) {
   vec2 subImage = texCoord_v / vec2(8.0, 2.0) + vec2(frame%8, frame/8) * vec2(1.0/8.0, 1.0/2.0);
@@ -22,5 +24,5 @@ void main() {
   int frame = int(time / frameDuration);
 
   // sample proper frame of the texture to get a fragment color  
-  gl_FragColor = sampleTexture(frame);
+  fragColor = sampleTexture(frame);
 }
