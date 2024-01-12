@@ -7,7 +7,7 @@ smooth in vec3 position_v;    // camera space fragment position
 smooth in vec2 texCoord_v;    // fragment texture coordinates
 
 // there are 8 frames in the row, two rows total
-uniform ivec2 pattern = ivec2(8, 2);
+uniform ivec2 pattern = ivec2(4, 4);
 // one frame lasts 0.1s
 uniform float frameDuration = 0.1f;
 
@@ -15,9 +15,17 @@ out vec4 fragColor;           // fragment color
 
 
 vec4 sampleTexture(int frame) {
-  vec2 subImage = texCoord_v / vec2(8.0, 2.0) + vec2(frame%8, frame/8) * vec2(1.0/8.0, 1.0/2.0);
-  return texture(texSampler, subImage);
+	// Assuming texCoord_v is the normalized texture coordinates [0,1] passed from the vertex shader
+	vec2 grid = vec2(4.0, 4.0); // Assuming a 4x4 grid of sub-images/frames
+	vec2 subImage = vec2(1.0 / grid.x, 1.0 / grid.y); // Calculate the size of a sub-image/frame
+	vec2 subImageCoord = vec2(mod(float(frame), grid.x), floor(float(frame) / grid.x)); // Calculate the sub-image/frame coordinate
+
+	subImageCoord *= subImage; // Calculate the UV coordinate of the sub-image/frame
+	subImageCoord += texCoord_v * subImage; // Calculate the UV coordinate of the pixel within the sub-image/frame
+
+	return texture(texSampler, subImageCoord); // Sample the texture
 }
+
 
 void main() {
   // frame of the texture to be used for explosion drawing 

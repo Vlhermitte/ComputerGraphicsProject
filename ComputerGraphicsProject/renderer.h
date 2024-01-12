@@ -33,6 +33,7 @@ typedef struct _GameObjects {
 	Object* tree1;
 	Object* tree2;
 	Object* gameOver;
+	Object* commandsBanner;
 
 	_GameObjects() {
 		player = NULL;
@@ -46,6 +47,7 @@ typedef struct _GameObjects {
 		tree1 = NULL;
 		tree2 = NULL;
 		gameOver = NULL;
+		commandsBanner = NULL;
 	}
 
 } GameObjectsList;
@@ -76,6 +78,7 @@ void drawSkybox(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
 void drawModel(Object* Model, std::vector<ObjectGeometry*> ModelGeometry, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
 void drawExplosion(ExplosionObject* explosion, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
 void drawGameOver(Object* Banner, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
+void drawCommandsBanner(Object* Banner, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
 void drawObjects(GameObjectsList GameObjects, glm::mat4 viewMatrix, glm::mat4 projectionMatrix);
 
 

@@ -32,8 +32,9 @@
 #define TREE2_MODEL_NAME "data/tree2/Tree2.obj"
 
 #define SKYBOX_PATH_NAME "data/skybox"
-#define EXPLOSION_TEXTURE_NAME "data/explode.png";
+#define EXPLOSION_TEXTURE_NAME "data/fire.png";
 #define GAMEOVER_BANNER_NAME "data/gameOver.png"
+#define COMMANDS_BANNER_NAME "data/commands.png"
 #define CUBE_TEXTURE_NAME "data/crate.jpg"
 
 /**

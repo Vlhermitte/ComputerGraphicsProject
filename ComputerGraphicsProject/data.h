@@ -119,11 +119,11 @@ const unsigned int cubeIndices[] = {
 
 const int explosionNumQuadVertices = 4;
 const float explosionVertexData[explosionNumQuadVertices * 5] = {
-  // x      y     z     u     v
-  -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-   1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-  -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-   1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+	  //  x      y     z     u     v
+	  -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+	  -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+	   1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+	   1.0f, -1.0f, 0.0f, 1.0f, 0.0f
 };
 
 

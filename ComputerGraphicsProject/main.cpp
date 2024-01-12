@@ -162,6 +162,10 @@ void reinisialiseObjects() {
 		GameObjects.gameOver = new Object(11);
 		GameObjects.gameOver->isInitialized = true;
 	}
+	if (GameObjects.commandsBanner == NULL) {
+		GameObjects.commandsBanner = new Object(12);
+		GameObjects.commandsBanner->isInitialized = true;
+	}
 
 	// Reinitialization Player
 	GameObjects.player->position = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -248,6 +252,16 @@ void reinisialiseObjects() {
 	GameObjects.gameOver->destroyed = false;
 	GameObjects.gameOver->startTime = GameState.elapsedTime;
 	GameObjects.gameOver->currentTime = GameObjects.gameOver->startTime;
+
+	// Commands Banner (display at the bottom of the screen)
+	GameObjects.commandsBanner->position = glm::vec3(0.0f, -0.95f, 0.0f);
+	GameObjects.commandsBanner->direction = glm::vec3(0.0f, 1.0f, 0.0f);
+	GameObjects.commandsBanner->speed = 0.0f;
+	GameObjects.commandsBanner->size = 3.0f;
+	GameObjects.commandsBanner->destroyed = false;
+	GameObjects.commandsBanner->startTime = GameState.elapsedTime;
+	GameObjects.commandsBanner->currentTime = GameObjects.commandsBanner->startTime;
+
 
 }
 
@@ -445,6 +459,9 @@ void drawScene() {
 	if (GameState.gameOver && GameObjects.gameOver != NULL) {
 		drawGameOver(GameObjects.gameOver, orthoViewMatrix, orthoProjectionMatrix);
 	}
+
+	// draw commands banner
+	drawCommandsBanner(GameObjects.commandsBanner, orthoViewMatrix, orthoProjectionMatrix);
 }
 
 /**
@@ -463,8 +480,10 @@ void updateObjects(float elapsedTime) {
 	}
 
 	if ((GameState.gameOver == true) && (GameObjects.gameOver != NULL)) {
-		GameObjects.gameOver->currentTime = GameState.elapsedTime;
+		GameObjects.gameOver->currentTime = GameState.elapsedTime * 0.1;
 	}
+
+	GameObjects.commandsBanner->currentTime = GameState.elapsedTime * 0.1;
 
 	// Check colisions 
 	checkCollisions();
