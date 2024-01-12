@@ -36,6 +36,7 @@ uniform bool fogOn;
 
 uniform bool turnSunOn;
 uniform bool useSpotLight;
+uniform bool usePointLight;
 uniform vec3 sunAmbient;
 uniform vec3 sunDiffuse;
 uniform vec3 sunSpecular;
@@ -55,6 +56,9 @@ out vec4 fragColor;
 Light sun;
 float sunSpeed = 0.25f;		// sun speed to simulate night and day cycle
 Light playerLight;
+Light bulbLight;
+vec3 bulbLightPosition = vec3(0.0f, 1.0f, 1.0f);
+vec3 bulbLightDirection = vec3(0.0f, -1.0f, -1.0f);
 
 void SetupLight() {
 	// Light parameters
@@ -72,6 +76,13 @@ void SetupLight() {
 	playerLight.spotExponent = 0.0;
 	playerLight.position = (ViewMatrix * vec4(spotLightPosition, 1.0)).xyz;
 	playerLight.spotDirection = normalize((ViewMatrix * vec4(spotLightDirection, 0.0)).xyz);
+
+	bulbLight.ambient = vec3(0.2f);
+	bulbLight.diffuse = vec3(1.0);
+	bulbLight.specular = vec3(1.0);
+	bulbLight.position = (ViewMatrix * vec4(bulbLightPosition, 1.0)).xyz;
+	bulbLight.spotDirection = normalize((ViewMatrix * vec4(bulbLightDirection, 0.0)).xyz);
+
 }
 
 vec4 directionalLight(Light light, Material material, vec3 vertexPosition, vec3 vertexNormal) {
@@ -114,6 +125,27 @@ vec4 spotLight(Light spotLight, Material material, vec3 vertexPosition, vec3 ver
 	return vec4(ret, 1.0);
 }
 
+vec4 pointLight(Light pointLight, Material material, vec3 vertexPosition, vec3 vertexNormal) {
+	// The more the light is far away, the less it is intense
+	vec3 ret = vec3(0.0);
+
+	vec3 L = normalize(pointLight.position - vertexPosition); // Light direction
+	vec3 V = normalize(-vertexPosition); // View direction
+	vec3 H = normalize(L + V); // Halfway vector between light and view directions
+	float NdotL = max(0.0, dot(vertexNormal, L));
+	float NdotH = max(0.0, dot(vertexNormal, H)); // Dot product of normal and halfway vector
+
+	ret += material.ambient * pointLight.ambient;
+	ret += material.diffuse * pointLight.diffuse * NdotL;
+	ret += material.specular * pointLight.specular * pow(NdotH, material.shininess); // Blinn-Phong specular term
+
+	float dist = length(pointLight.position - vertexPosition);
+	float att = 1.0 / (1.0 + 0.1 * dist + 0.01 * dist * dist);
+	ret *= att;
+
+	return vec4(ret, 1.0);
+}
+
 float computeVisbility(float distToCam) {
 	float fogNear = 0.0f;
 	float fogFar = 1.0f;
@@ -134,6 +166,8 @@ void main() {
 		outputColor += directionalLight(sun, material, fragPosition, fragNormal);
 	if (useSpotLight)
 		outputColor += spotLight(playerLight, material, fragPosition, fragNormal);
+	if (usePointLight)
+		outputColor += pointLight(bulbLight, material, fragPosition, fragNormal);
 
 	// apply texture if it is on
 	if(material.useTexture)

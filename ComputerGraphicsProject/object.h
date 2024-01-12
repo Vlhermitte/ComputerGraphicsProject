@@ -79,6 +79,7 @@ typedef struct _ShaderProgram {
 		GLint sunSpotDirection;
 		GLint turnSunOn;
 		GLint useSpotLight;
+		GLint usePointLight;
 		GLint spotLightPosition;
 		GLint spotLightDirection;
 	} locations;
@@ -108,7 +109,9 @@ typedef struct _ShaderProgram {
 		locations.sunSpecular = -1;
 		locations.sunPosition = -1;
 		locations.sunSpotDirection = -1;
+		locations.turnSunOn = -1;
 		locations.useSpotLight = -1;
+		locations.usePointLight = -1;
 		locations.spotLightPosition = -1;
 		locations.spotLightDirection = -1;
 	}

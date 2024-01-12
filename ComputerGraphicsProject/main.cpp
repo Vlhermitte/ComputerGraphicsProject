@@ -21,6 +21,7 @@ struct _GameState {
 	bool fogOn; // false
 	bool turnSunOn; // true
 	bool useSpotLight; // false
+	bool usePointLight; // false
 	bool gameOver;
 
 	int windowWidth; // 800 (currently not used)
@@ -35,7 +36,8 @@ struct _GameState {
 		elapsedTime(0.0f), 
 		fogOn(false),
 		turnSunOn(true),
-		useSpotLight(false), 
+		useSpotLight(false),
+		usePointLight(false),
 		windowWidth(WINDOW_WIDTH), 
 		windowHeight(WINDOW_HEIGHT) {
 		for (int i = 0; i < KEYS_COUNT; i++)
@@ -427,6 +429,7 @@ void drawScene() {
 	glUniform1i(commonShaderProgram.locations.fogOn, GameState.fogOn);
 	glUniform1i(commonShaderProgram.locations.turnSunOn, GameState.turnSunOn);
 	glUniform1i(commonShaderProgram.locations.useSpotLight, GameState.useSpotLight);
+	glUniform1i(commonShaderProgram.locations.usePointLight, GameState.usePointLight);
 	glUniform3fv(commonShaderProgram.locations.spotLightPosition, 1, glm::value_ptr(GameObjects.player->position));
 	glUniform3fv(commonShaderProgram.locations.spotLightDirection, 1, glm::value_ptr(spotlightDirection));
 	glUseProgram(0);
@@ -671,6 +674,11 @@ void keyboardCb(unsigned char keyPressed, int mouseX, int mouseY) {
 			GameState.useSpotLight = !GameState.useSpotLight;
 			// print spot light on or spot light off
 			GameState.useSpotLight ? printf("Spot light On\n") : printf("Spot light Off\n");
+			break;
+		case 'i':
+			GameState.usePointLight = !GameState.usePointLight;
+			// print point light on or point light off
+			GameState.usePointLight ? printf("Point light On\n") : printf("Point light Off\n");
 			break;
 		case 'm':
 			GameObjects.foxbat->isMoving = !GameObjects.foxbat->isMoving;

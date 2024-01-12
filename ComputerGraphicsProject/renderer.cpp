@@ -71,6 +71,7 @@ void loadShaderPrograms() {
 	commonShaderProgram.locations.sunSpecular = glGetUniformLocation(commonShaderProgram.program, "sunSpecular");
 	commonShaderProgram.locations.turnSunOn = glGetUniformLocation(commonShaderProgram.program, "turnSunOn");
 	commonShaderProgram.locations.useSpotLight = glGetUniformLocation(commonShaderProgram.program, "useSpotLight");
+	commonShaderProgram.locations.usePointLight = glGetUniformLocation(commonShaderProgram.program, "usePointLight");
 	commonShaderProgram.locations.spotLightPosition = glGetUniformLocation(commonShaderProgram.program, "spotLightPosition");
 	commonShaderProgram.locations.spotLightDirection = glGetUniformLocation(commonShaderProgram.program, "spotLightDirection");
 
