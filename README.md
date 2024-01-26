@@ -32,5 +32,10 @@ The project uses the pgr framework provided by the course.
 - `f` - toggle the fog on/off
 
 
+## Preview 
+
+<img width="747" alt="Screenshot1" src="https://github.com/Vlhermitte/ComputerGraphicsProject/assets/79002719/0894e16e-5f2a-46f1-9454-3e08bb79a825">
+
+
 ## Authors
 Valentin Lhermitte
